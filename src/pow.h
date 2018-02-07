@@ -20,4 +20,11 @@ unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nF
 /** Check whether a block hash satisfies the proof-of-work requirement specified by nBits */
 bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&);
 
+/**
+ * Bitcoin cash's difficulty adjustment mechanism.
+ */
+uint32_t GetNextCashWorkRequired(const CBlockIndex *pindexPrev,
+                                 const CBlockHeader *pblock,
+                                 const Consensus::Params& params);
+
 #endif // BITCOIN_POW_H

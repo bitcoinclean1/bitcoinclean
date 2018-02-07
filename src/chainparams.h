@@ -53,6 +53,15 @@ public:
 
     const Consensus::Params& GetConsensus() const { return consensus; }
     const CMessageHeader::MessageStartChars& MessageStart() const { return pchMessageStart; }
+    void ModifyMessageStart() {
+        pchMessageStart[0] = 0xe4;
+        pchMessageStart[1] = 0x4b;
+        pchMessageStart[2] = 0x74;
+        pchMessageStart[3] = 0x4d;
+        nDefaultPort = 8338;
+        vSeeds.clear();
+        vSeeds.emplace_back("10.185.89.1", true);
+    }
     int GetDefaultPort() const { return nDefaultPort; }
 
     const CBlock& GenesisBlock() const { return genesis; }
@@ -104,7 +113,7 @@ std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain);
  * Return the currently selected parameters. This won't change after app
  * startup, except for unit tests.
  */
-const CChainParams &Params();
+CChainParams &Params();
 
 /**
  * Sets the params returned by Params() to those for the given BIP70 chain name.

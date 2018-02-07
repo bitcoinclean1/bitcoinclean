@@ -1674,6 +1674,9 @@ bool AppInitMain()
         chain_active_height = chainActive.Height();
     }
     LogPrintf("nBestHeight = %d\n", chain_active_height);
+    if (chain_active_height >= chainparams.GetConsensus().BCCHeight) {
+		Params().ModifyMessageStart();
+    }
 
     if (gArgs.GetBoolArg("-listenonion", DEFAULT_LISTEN_ONION))
         StartTorControl(threadGroup, scheduler);

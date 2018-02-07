@@ -116,6 +116,8 @@ struct CSerializedNetMsg
 class NetEventsInterface;
 class CConnman
 {
+    CScheduler& saved_scheduler;
+    Options&    saconnOptions
 public:
 
     enum NumConnections {

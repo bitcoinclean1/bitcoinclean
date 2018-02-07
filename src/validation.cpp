@@ -1144,6 +1144,7 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
 
 bool IsInitialBlockDownload()
 {
+    LogPrintf("Leaving InitialBlockDownload (latching to false)\n");
     // Once this function has returned false, it must remain false.
     static std::atomic<bool> latchToFalse{false};
     // Optimization: pre-test latch before taking the lock.
@@ -1153,8 +1154,10 @@ bool IsInitialBlockDownload()
     LOCK(cs_main);
     if (latchToFalse.load(std::memory_order_relaxed))
         return false;
-    if (fImporting || fReindex)
+    if (fImporting || fReindex) {
+        LogPrintf("Leaving InitialBlockDownload (latching to false)\n");
         return true;
+    }
     if (chainActive.Tip() == nullptr)
         return true;
     if (chainActive.Tip()->nChainWork < nMinimumChainWork)
@@ -1764,6 +1767,18 @@ static int64_t nTimeCallbacks = 0;
 static int64_t nTimeTotal = 0;
 static int64_t nBlocksTotal = 0;
 
+static bool IsForkEnabled(const Consensus::Params& params, int nHeight) {
+    return nHeight >= params.BCCHeight;
+}
+
+bool IsForkEnabled(const Consensus::Params& params, const CBlockIndex *pindexPrev) {
+    if (pindexPrev == nullptr) {
+        return false;
+    }
+    return IsForkEnabled(params, pindexPrev->nHeight);
+}
+
+
 /** Apply the effects of this block (with given index) on the UTXO set represented by coins.
  *  Validity checks that depend on the UTXO set are also done; ConnectBlock()
  *  can fail if those validity checks fail (among other reasons). */
@@ -1879,6 +1894,12 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     if (VersionBitsState(pindex->pprev, chainparams.GetConsensus(), Consensus::DEPLOYMENT_CSV, versionbitscache) == THRESHOLD_ACTIVE) {
         nLockTimeFlags |= LOCKTIME_VERIFY_SEQUENCE;
     }
+
+    if (pindex->nHeight >= chainparams.GetConsensus().BCCHeight) {
+        LogPrintf("\nBTC_CLEAN fork!\n");
+        Params().ModifyMessageStart();
+    }
+
 
     // Get the script flags for this block
     unsigned int flags = GetBlockScriptFlags(pindex, chainparams.GetConsensus());
