@@ -69,12 +69,23 @@ void CChainParams::UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64
  *    timestamp before)
  * + Contains no strange transactions
  */
+void CChainParams::ModifyMessageStart() {
+        pchMessageStart[0] = 0xe4;
+        pchMessageStart[1] = 0x4b;
+        pchMessageStart[2] = 0x74;
+        pchMessageStart[3] = 0x4d;
+
+        nDefaultPort = 8338;
+        vSeeds.clear();
+        vSeeds.emplace_back("10.185.89.1", true);
+    }
+
 
 class CMainParams : public CChainParams {
 public:
     CMainParams() {
         strNetworkID = "main";
-        consensus.BCCHeight = 507410;
+        consensus.BCCHeight = 509960;
         consensus.BCCPremineWindow = 100;
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP16Height = 173805; // 00000000000000ce80a7e057163a4db1d5ad7b20fb6f598c9597b9665c8fb0d4 - April 1, 2012
@@ -133,10 +144,15 @@ public:
         // service bits we want, but we should get them updated to support all service bits wanted by any
         // release ASAP to avoid it where possible.
         // Note that of those with the service bits flag, most only support a subset of possible options
-        vSeeds.emplace_back("172.16.16.10", true);
+        vSeeds.emplace_back("seed.bitcoin.sipa.be", true); // Pieter Wuille, only supports x1, x5, x9, and xd
+        vSeeds.emplace_back("dnsseed.bluematt.me", true); // Matt Corallo, only supports x9
+        vSeeds.emplace_back("dnsseed.bitcoin.dashjr.org", false); // Luke Dashjr
+        vSeeds.emplace_back("seed.bitcoinstats.com", true); // Christian Decker, supports x1 - xf
+        vSeeds.emplace_back("seed.bitcoin.jonasschnelli.ch", true); // Jonas Schnelli, only supports x1, x5, x9, and xd
+        vSeeds.emplace_back("seed.btc.petertodd.org", true); // Peter Todd, only supports x1, x5, x9, and xd
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,3);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,7);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,0);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,5);
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,128);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x88, 0xAD, 0xE4};

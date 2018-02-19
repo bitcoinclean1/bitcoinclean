@@ -53,15 +53,7 @@ public:
 
     const Consensus::Params& GetConsensus() const { return consensus; }
     const CMessageHeader::MessageStartChars& MessageStart() const { return pchMessageStart; }
-    void ModifyMessageStart() {
-        pchMessageStart[0] = 0xe4;
-        pchMessageStart[1] = 0x4b;
-        pchMessageStart[2] = 0x74;
-        pchMessageStart[3] = 0x4d;
-        nDefaultPort = 8338;
-        vSeeds.clear();
-        vSeeds.emplace_back("10.185.89.1", true);
-    }
+    void ModifyMessageStart();
     int GetDefaultPort() const { return nDefaultPort; }
 
     const CBlock& GenesisBlock() const { return genesis; }

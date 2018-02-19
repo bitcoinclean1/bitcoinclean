@@ -1753,6 +1753,11 @@ static unsigned int GetBlockScriptFlags(const CBlockIndex* pindex, const Consens
         flags |= SCRIPT_VERIFY_NULLDUMMY;
     }
 
+    if (pindex->nHeight >= consensusparams.BCCHeight) {
+//        flags |= SCRIPT_VERIFY_STRICTENC;
+//        flags |= SCRIPT_ENABLE_SIGHASH_FORKID;
+    }
+
     return flags;
 }
 
@@ -1894,12 +1899,13 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     if (VersionBitsState(pindex->pprev, chainparams.GetConsensus(), Consensus::DEPLOYMENT_CSV, versionbitscache) == THRESHOLD_ACTIVE) {
         nLockTimeFlags |= LOCKTIME_VERIFY_SEQUENCE;
     }
-
+/*
     if (pindex->nHeight >= chainparams.GetConsensus().BCCHeight) {
         LogPrintf("\nBTC_CLEAN fork!\n");
         Params().ModifyMessageStart();
+        //chainparams.ModifyMessageStart();
     }
-
+*/
 
     // Get the script flags for this block
     unsigned int flags = GetBlockScriptFlags(pindex, chainparams.GetConsensus());
