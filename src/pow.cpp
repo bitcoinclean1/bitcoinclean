@@ -54,8 +54,9 @@ uint32_t GetNextWorkRequired(const CBlockIndex *pindexPrev,
                              const CBlockHeader *pblock, const Consensus::Params& params) {
     LogPrintf("\npindexPrev->nHeight %d, params.BCCHeight %d, IsForkEnabled(params,pindexPrev) %d, chainActive.Height() %d",
 		pindexPrev->nHeight,params.BCCHeight,IsForkEnabled(params,pindexPrev),chainActive.Height());
-    int nHeight = chainActive.Height();
-    bool postfork = nHeight >= params.BCCHeight;
+    int nHeight = pindexPrev->nHeight;
+//    int nHeight = chainActive.Height();
+    bool postfork = (nHeight >= params.BCCHeight);
     uint32_t nProofOfWorkLimit = UintToArith256(params.powLimit).GetCompact();
 
     // Genesis block
@@ -66,7 +67,7 @@ uint32_t GetNextWorkRequired(const CBlockIndex *pindexPrev,
     if (postfork == false) {
         return GetNextBitcoinWorkRequired(pindexPrev, pblock, params);
     }
-    else if (nHeight < params.BCCHeight + params.BCCPremineWindow) {
+    else if (nHeight < (params.BCCHeight + params.BCCPremineWindow)) {
         return nProofOfWorkLimit;
     }
 

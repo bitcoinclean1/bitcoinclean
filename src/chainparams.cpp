@@ -75,6 +75,10 @@ void CChainParams::ModifyMessageStart() {
         pchMessageStart[2] = 0x74;
         pchMessageStart[3] = 0x4d;
 
+//        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,39);
+//        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,24);
+
+
         nDefaultPort = 8338;
         vSeeds.clear();
         vSeeds.emplace_back("10.185.89.1", true);
@@ -85,7 +89,7 @@ class CMainParams : public CChainParams {
 public:
     CMainParams() {
         strNetworkID = "main";
-        consensus.BCCHeight = 509960;
+        consensus.BCCHeight = 510225;
         consensus.BCCPremineWindow = 100;
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP16Height = 173805; // 00000000000000ce80a7e057163a4db1d5ad7b20fb6f598c9597b9665c8fb0d4 - April 1, 2012
@@ -157,7 +161,7 @@ public:
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x88, 0xAD, 0xE4};
 
-        bech32_hrp = "bc";
+        bech32_hrp = "bcc";
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 
