@@ -70,26 +70,14 @@ void CChainParams::UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64
  * + Contains no strange transactions
  */
 void CChainParams::ModifyMessageStart() {
-        pchMessageStart[0] = 0xe4;
-        pchMessageStart[1] = 0x4b;
-        pchMessageStart[2] = 0x74;
-        pchMessageStart[3] = 0x4d;
-
-//        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,39);
-//        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,24);
-
-
-        nDefaultPort = 8338;
-        vSeeds.clear();
-        vSeeds.emplace_back("10.185.89.1", true);
     }
-
 
 class CMainParams : public CChainParams {
 public:
     CMainParams() {
         strNetworkID = "main";
-        consensus.BCCHeight = 510225;
+//        consensus.BCCHeight = 510225;
+        consensus.BCCHeight = 100000;
         consensus.BCCPremineWindow = 100;
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP16Height = 173805; // 00000000000000ce80a7e057163a4db1d5ad7b20fb6f598c9597b9665c8fb0d4 - April 1, 2012
@@ -129,11 +117,19 @@ public:
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
          * a large 32-bit integer with any alignment.
          */
+#ifdef FORK_NODE
         pchMessageStart[0] = 0xf9;
         pchMessageStart[1] = 0xbe;
         pchMessageStart[2] = 0xb4;
         pchMessageStart[3] = 0xd9;
         nDefaultPort = 8333;
+#else
+        pchMessageStart[0] = 0xe4;
+        pchMessageStart[1] = 0x4b;
+        pchMessageStart[2] = 0x74;
+        pchMessageStart[3] = 0x4d;
+        nDefaultPort = 8338;
+#endif
 
         nPruneAfterHeight = 100000;
 
@@ -147,6 +143,7 @@ public:
         // This is fine at runtime as we'll fall back to using them as a oneshot if they dont support the
         // service bits we want, but we should get them updated to support all service bits wanted by any
         // release ASAP to avoid it where possible.
+#ifdef FORK_NODE
         // Note that of those with the service bits flag, most only support a subset of possible options
         vSeeds.emplace_back("seed.bitcoin.sipa.be", true); // Pieter Wuille, only supports x1, x5, x9, and xd
         vSeeds.emplace_back("dnsseed.bluematt.me", true); // Matt Corallo, only supports x9
@@ -154,8 +151,11 @@ public:
         vSeeds.emplace_back("seed.bitcoinstats.com", true); // Christian Decker, supports x1 - xf
         vSeeds.emplace_back("seed.bitcoin.jonasschnelli.ch", true); // Jonas Schnelli, only supports x1, x5, x9, and xd
         vSeeds.emplace_back("seed.btc.petertodd.org", true); // Peter Todd, only supports x1, x5, x9, and xd
-
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,0);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,11);
+#else
+        vSeeds.emplace_back("10.185.89.1", true); // Peter Todd, only supports x1, x5, x9, and xd
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,11);
+#endif
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,5);
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,128);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};

@@ -1899,12 +1899,16 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     if (VersionBitsState(pindex->pprev, chainparams.GetConsensus(), Consensus::DEPLOYMENT_CSV, versionbitscache) == THRESHOLD_ACTIVE) {
         nLockTimeFlags |= LOCKTIME_VERIFY_SEQUENCE;
     }
+#ifdef FORK_NODE
     if (pindex->nHeight >= chainparams.GetConsensus().BCCHeight) {
         LogPrintf("\nBTC_CLEAN fork!\n");
         Params().ModifyMessageStart();
-        //raise(SIGTERM);
+        raise(SIGTERM);
         //chainparams.ModifyMessageStart();
+        //
+        return false;
     }
+#endif
     // Get the script flags for this block
     unsigned int flags = GetBlockScriptFlags(pindex, chainparams.GetConsensus());
 

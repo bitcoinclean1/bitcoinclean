@@ -54,8 +54,11 @@ uint32_t GetNextWorkRequired(const CBlockIndex *pindexPrev,
                              const CBlockHeader *pblock, const Consensus::Params& params) {
     LogPrintf("\npindexPrev->nHeight %d, params.BCCHeight %d, IsForkEnabled(params,pindexPrev) %d, chainActive.Height() %d",
 		pindexPrev->nHeight,params.BCCHeight,IsForkEnabled(params,pindexPrev),chainActive.Height());
+#ifdef FORK_NODE
+    int nHeight = chainActive.Height();
+#else
     int nHeight = pindexPrev->nHeight;
-//    int nHeight = chainActive.Height();
+#endif
     bool postfork = (nHeight >= params.BCCHeight);
     uint32_t nProofOfWorkLimit = UintToArith256(params.powLimit).GetCompact();
 

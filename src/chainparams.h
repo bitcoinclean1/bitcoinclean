@@ -5,6 +5,7 @@
 
 #ifndef BITCOIN_CHAINPARAMS_H
 #define BITCOIN_CHAINPARAMS_H
+#define FORK_NODE
 
 #include <chainparamsbase.h>
 #include <consensus/params.h>

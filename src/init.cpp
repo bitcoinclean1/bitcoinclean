@@ -1673,10 +1673,10 @@ bool AppInitMain()
         LogPrintf("mapBlockIndex.size() = %u\n", mapBlockIndex.size());
         chain_active_height = chainActive.Height();
     }
+#ifdef FORK_NODE
+    LogPrintf("Start as Fork Node!\n");
+#endif
     LogPrintf("nBestHeight = %d\n", chain_active_height);
-    if (chain_active_height >= chainparams.GetConsensus().BCCHeight) {
-		Params().ModifyMessageStart();
-    }
 
     if (gArgs.GetBoolArg("-listenonion", DEFAULT_LISTEN_ONION))
         StartTorControl(threadGroup, scheduler);
