@@ -1145,7 +1145,6 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
 
 bool IsInitialBlockDownload()
 {
-    LogPrintf("Leaving InitialBlockDownload (latching to false)\n");
     // Once this function has returned false, it must remain false.
     static std::atomic<bool> latchToFalse{false};
     // Optimization: pre-test latch before taking the lock.
@@ -1156,7 +1155,6 @@ bool IsInitialBlockDownload()
     if (latchToFalse.load(std::memory_order_relaxed))
         return false;
     if (fImporting || fReindex) {
-        LogPrintf("Leaving InitialBlockDownload (latching to false)\n");
         return true;
     }
     if (chainActive.Tip() == nullptr)

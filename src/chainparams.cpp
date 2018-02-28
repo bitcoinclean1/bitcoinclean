@@ -76,7 +76,7 @@ class CMainParams : public CChainParams {
 public:
     CMainParams() {
         strNetworkID = "main";
-        consensus.BCCHeight = 510225;
+        consensus.BCCHeight = 510000;
         //consensus.BCCHeight = 100000;
         consensus.BCCPremineWindow = 500;
         consensus.nSubsidyHalvingInterval = 210000;
