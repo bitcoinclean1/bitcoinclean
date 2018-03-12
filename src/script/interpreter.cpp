@@ -1176,11 +1176,14 @@ PrecomputedTransactionData::PrecomputedTransactionData(const CTransaction& txTo)
     }
 }
 
-uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache)
+uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache, uint32_t flags)
 {
     assert(nIn < txTo.vin.size());
+    bool postFork = (flags & SCRIPT_ENABLE_SIGHASH_FORKID);
+    bool hasForkId = (nHashType & SIGHASH_FORKID);
 
-    if (sigversion == SIGVERSION_WITNESS_V0) {
+    if (((sigversion == SIGVERSION_WITNESS_V0) && !postFork && !hasForkId)
+	|| (hasForkId && postFork)) {
         uint256 hashPrevouts;
         uint256 hashSequence;
         uint256 hashOutputs;
@@ -1193,7 +1196,6 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
         if (!(nHashType & SIGHASH_ANYONECANPAY) && (nHashType & 0x1f) != SIGHASH_SINGLE && (nHashType & 0x1f) != SIGHASH_NONE) {
             hashSequence = cacheready ? cache->hashSequence : GetSequenceHash(txTo);
         }
-
 
         if ((nHashType & 0x1f) != SIGHASH_SINGLE && (nHashType & 0x1f) != SIGHASH_NONE) {
             hashOutputs = cacheready ? cache->hashOutputs : GetOutputsHash(txTo);

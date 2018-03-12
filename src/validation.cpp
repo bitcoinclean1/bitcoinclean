@@ -1754,7 +1754,7 @@ static unsigned int GetBlockScriptFlags(const CBlockIndex* pindex, const Consens
 
     if (pindex->nHeight >= consensusparams.BCCHeight) {
 //        flags |= SCRIPT_VERIFY_STRICTENC;
-//        flags |= SCRIPT_ENABLE_SIGHASH_FORKID;
+        flags |= SCRIPT_ENABLE_SIGHASH_FORKID;
     }
 
     return flags;
@@ -1900,11 +1900,8 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     }
 #ifdef FORK_NODE
     if (pindex->nHeight >= chainparams.GetConsensus().BCCHeight) {
-        LogPrintf("\nBTC_CLEAN fork!\n");
-        Params().ModifyMessageStart();
+        LogPrintf("\nBTC_CLEAN fork! exiting\n");
         raise(SIGTERM);
-        //chainparams.ModifyMessageStart();
-        //
         return false;
     }
 #endif
