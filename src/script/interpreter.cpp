@@ -1179,11 +1179,11 @@ PrecomputedTransactionData::PrecomputedTransactionData(const CTransaction& txTo)
 uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache, uint32_t flags)
 {
     assert(nIn < txTo.vin.size());
+    static const uint256 salt(uint256S("F66CD4D15623C285720E67A261B1BDB6199B5CE17694DB147B51B00151E31D44"));
     bool postFork = (flags & SCRIPT_ENABLE_SIGHASH_FORKID);
     bool hasForkId = (nHashType & SIGHASH_FORKID);
 
-    if (((sigversion == SIGVERSION_WITNESS_V0) && !postFork && !hasForkId)
-	|| (hasForkId && postFork)) {
+    if (sigversion == SIGVERSION_WITNESS_V0) {
         uint256 hashPrevouts;
         uint256 hashSequence;
         uint256 hashOutputs;
@@ -1208,6 +1208,9 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
         CHashWriter ss(SER_GETHASH, 0);
         // Version
         ss << txTo.nVersion;
+        if (postFork && hasForkId) {
+           ss << salt;
+        }
         // Input prevouts/nSequence (none/all, depending on flags)
         ss << hashPrevouts;
         ss << hashSequence;
@@ -1244,6 +1247,9 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
     // Serialize and hash
     CHashWriter ss(SER_GETHASH, 0);
     ss << txTmp << nHashType;
+    if (postFork && hasForkId) {
+      ss << salt;
+    }
     return ss.GetHash();
 }
 
