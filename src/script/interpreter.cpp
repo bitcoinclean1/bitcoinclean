@@ -1179,7 +1179,8 @@ PrecomputedTransactionData::PrecomputedTransactionData(const CTransaction& txTo)
 uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsigned int nIn, int nHashType, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache, uint32_t flags)
 {
     assert(nIn < txTo.vin.size());
-    static const uint256 salt(uint256S("F66CD4D15623C285720E67A261B1BDB6199B5CE17694DB147B51B00151E31D44"));
+    static const uint256 salt(uint256S("50340A31362031360A07E01D7837FC67BE4E7ECCFF9F6F9FC59FC1C7C1638363822344310C0E7003C0"));
+
     bool postFork = (flags & SCRIPT_ENABLE_SIGHASH_FORKID);
     bool hasForkId = (nHashType & SIGHASH_FORKID);
 
