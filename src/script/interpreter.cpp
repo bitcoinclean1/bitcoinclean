@@ -11,6 +11,7 @@
 #include <pubkey.h>
 #include <script/script.h>
 #include <uint256.h>
+#include <util.h>
 
 typedef std::vector<unsigned char> valtype;
 
@@ -896,7 +897,7 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                         //serror is set
                         return false;
                     }
-                    bool fSuccess = checker.CheckSig(vchSig, vchPubKey, scriptCode, sigversion);
+                    bool fSuccess = checker.CheckSig(vchSig, vchPubKey, scriptCode, sigversion, flags);
 
                     if (!fSuccess && (flags & SCRIPT_VERIFY_NULLFAIL) && vchSig.size())
                         return set_error(serror, SCRIPT_ERR_SIG_NULLFAIL);
@@ -972,7 +973,7 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                         }
 
                         // Check signature
-                        bool fOk = checker.CheckSig(vchSig, vchPubKey, scriptCode, sigversion);
+                        bool fOk = checker.CheckSig(vchSig, vchPubKey, scriptCode, sigversion, flags);
 
                         if (fOk) {
                             isig++;
@@ -1181,8 +1182,9 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
     assert(nIn < txTo.vin.size());
     static const uint256 salt(uint256S("50340A31362031360A07E01D7837FC67BE4E7ECCFF9F6F9FC59FC1C7C1638363822344310C0E7003C0"));
 
-    bool postFork = (flags & SCRIPT_ENABLE_SIGHASH_FORKID);
-    bool hasForkId = (nHashType & SIGHASH_FORKID);
+    bool postFork = ((flags & SCRIPT_ENABLE_SIGHASH_FORKID) == SCRIPT_ENABLE_SIGHASH_FORKID);
+    bool hasForkId = ((nHashType & SIGHASH_FORKID) == SIGHASH_FORKID);
+
 
     if (sigversion == SIGVERSION_WITNESS_V0) {
         uint256 hashPrevouts;
@@ -1210,6 +1212,7 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
         // Version
         ss << txTo.nVersion;
         if (postFork && hasForkId) {
+           LogPrintf("\nSignatureHash SIGWIT: nHashType=%d add salt\n", nHashType);
            ss << salt;
         }
         // Input prevouts/nSequence (none/all, depending on flags)
@@ -1249,6 +1252,7 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
     CHashWriter ss(SER_GETHASH, 0);
     ss << txTmp << nHashType;
     if (postFork && hasForkId) {
+      LogPrintf("\nSignatureHash: nHashType=%d add salt\n", nHashType);
       ss << salt;
     }
     return ss.GetHash();
@@ -1259,7 +1263,7 @@ bool TransactionSignatureChecker::VerifySignature(const std::vector<unsigned cha
     return pubkey.Verify(sighash, vchSig);
 }
 
-bool TransactionSignatureChecker::CheckSig(const std::vector<unsigned char>& vchSigIn, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const
+bool TransactionSignatureChecker::CheckSig(const std::vector<unsigned char>& vchSigIn, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion, uint32_t flags) const
 {
     CPubKey pubkey(vchPubKey);
     if (!pubkey.IsValid())
@@ -1272,7 +1276,7 @@ bool TransactionSignatureChecker::CheckSig(const std::vector<unsigned char>& vch
     int nHashType = vchSig.back();
     vchSig.pop_back();
 
-    uint256 sighash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, sigversion, this->txdata);
+    uint256 sighash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, sigversion, this->txdata, flags);
 
     if (!VerifySignature(vchSig, pubkey, sighash))
         return false;
