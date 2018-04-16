@@ -23,7 +23,7 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
 /**
  * Bitcoin cash's difficulty adjustment mechanism.
  */
-uint32_t GetNextCashWorkRequired(const CBlockIndex *pindexPrev,
+uint32_t GetNextBCCWorkRequired(const CBlockIndex *pindexPrev,
                                  const CBlockHeader *pblock,
                                  const Consensus::Params& params);
 

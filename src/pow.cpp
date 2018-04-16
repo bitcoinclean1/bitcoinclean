@@ -52,8 +52,10 @@ unsigned int GetNextBitcoinWorkRequired(const CBlockIndex* pindexLast, const CBl
 
 uint32_t GetNextWorkRequired(const CBlockIndex *pindexPrev,
                              const CBlockHeader *pblock, const Consensus::Params& params) {
+/*
     LogPrintf("\npindexPrev->nHeight %d, params.BCCHeight %d, IsForkEnabled(params,pindexPrev) %d, chainActive.Height() %d",
 		pindexPrev->nHeight,params.BCCHeight,IsForkEnabled(params,pindexPrev),chainActive.Height());
+*/
 #ifdef FORK_NODE
     int nHeight = chainActive.Height();
 #else
@@ -74,7 +76,7 @@ uint32_t GetNextWorkRequired(const CBlockIndex *pindexPrev,
         return nProofOfWorkLimit;
     }
 
-    return GetNextCashWorkRequired(pindexPrev, pblock, params);
+    return GetNextBCCWorkRequired(pindexPrev, pblock, params);
 }
 
 uint32_t CalculateNextWorkRequired(const CBlockIndex *pindexPrev,
@@ -209,7 +211,7 @@ static const CBlockIndex *GetSuitableBlock(const CBlockIndex *pindex) {
  * block. Because timestamps are the least trustworthy information we have as
  * input, this ensures the algorithm is more resistant to malicious inputs.
  */
-uint32_t GetNextCashWorkRequired(const CBlockIndex *pindexPrev,
+uint32_t GetNextBCCWorkRequired(const CBlockIndex *pindexPrev,
                                  const CBlockHeader *pblock,
                                  const Consensus::Params& params) {
 
