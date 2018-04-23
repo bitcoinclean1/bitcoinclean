@@ -1212,7 +1212,6 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
         // Version
         ss << txTo.nVersion;
         if (postFork && hasForkId) {
-           LogPrintf("\nSignatureHash SIGWIT: nHashType=%d add salt\n", nHashType);
            ss << salt;
         }
         // Input prevouts/nSequence (none/all, depending on flags)
@@ -1252,7 +1251,6 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
     CHashWriter ss(SER_GETHASH, 0);
     ss << txTmp << nHashType;
     if (postFork && hasForkId) {
-      LogPrintf("\nSignatureHash: nHashType=%d add salt\n", nHashType);
       ss << salt;
     }
     return ss.GetHash();
