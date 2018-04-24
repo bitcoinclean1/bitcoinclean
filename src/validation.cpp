@@ -38,6 +38,7 @@
 #include <utilmoneystr.h>
 #include <utilstrencodings.h>
 #include <validationinterface.h>
+#include <vote/vote.h>
 #include <warnings.h>
 #include <signal.h>
 
@@ -1421,6 +1422,12 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
                 }
             }
 
+            if (IsVoteTx(tx)) {
+                if(!ValidateVoteTx(tx, state, inputs)) {
+                    return false;
+                }
+            }
+
             if (cacheFullScriptStore && !pvChecks) {
                 // We executed all of the provided scripts, and were told to
                 // cache the result. Do so now.
@@ -1989,6 +1996,9 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                          error("ConnectBlock(): coinbase pays too much (actual=%d vs limit=%d)",
                                block.vtx[0]->GetValueOut(), blockReward),
                                REJECT_INVALID, "bad-cb-amount");
+
+    if(!SufficientMinerrank(ExtractDestination(block.vtx[0]->vout[0].scriptPubKey)))
+        return state.DoS(100, error("ConnectBlock(): insufficient minerrank for coinbase destination\n"), REJECT_INVALID, "insufficient-minerrank");
 
     if (!control.Wait())
         return state.DoS(100, error("%s: CheckQueue failed", __func__), REJECT_INVALID, "block-validation-failed");

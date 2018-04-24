@@ -1258,6 +1258,7 @@ bool AppInitMain()
 #ifdef ENABLE_WALLET
     RegisterWalletRPC(tableRPC);
 #endif
+    RegisterVoteRPCCommands(tableRPC);
 
     /* Start the RPC server already.  It will be started in "warmup" mode
      * and not really process calls already (but it will signify connections
@@ -1593,6 +1594,9 @@ bool AppInitMain()
     if (!est_filein.IsNull())
         ::feeEstimator.Read(est_filein);
     fFeeEstimatesInitialized = true;
+
+    InitVote();
+
 
     // ********************************************************* Step 8: load wallet
 #ifdef ENABLE_WALLET
