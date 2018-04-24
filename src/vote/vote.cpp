@@ -21,15 +21,6 @@ const std::string ScriptToString(const CScript &script, int n)
   return str;
 }
 
-const CKeyID ExtractDestination(const CScript &scriptPubKey)
-{
-  CTxDestination address;
-  ExtractDestination(scriptPubKey, address);
-  CKeyID hash;
-  CBitcoinAddress(address).GetKeyID(hash);
-  return hash;
-}
-
 bool IsVoteTx(const CTransaction &tx)
 {
   if (tx.vout.size() > 2)
@@ -51,17 +42,17 @@ bool ValidateVoteTx(const CTransaction &tx, CValidationState& state, const CCoin
     parser.Next();
     std::pair<std::set<CKeyID>::iterator,bool> ins = targetHashes.insert(parser.result.targetHash);
     if (!ins.second)
-      return state.Invalid(false, REJECT_VOTE_INVALID, strprintf("repeated-vote-target (%s)", parser.result.targetAddress.ToString()));
+      return state.Invalid(false, REJECT_VOTE_INVALID, strprintf("repeated-vote-target (%s)", EncodeDestination(parser.result.targetHash)));
     votes.push_back(parser.result);
   }
   if (!parser.valid)
     return state.Invalid(false, REJECT_VOTE_INVALID, strprintf("invalid-vote-syntax (%i %s)", parser.pos, parser.token));
   if (parser.result.sourceHash == parser.result.targetHash)
-    return state.Invalid(false, REJECT_VOTE_SELF, strprintf("self-vote (%s)", parser.result.sourceAddress.ToString()));
+    return state.Invalid(false, REJECT_VOTE_SELF, strprintf("self-vote (%s)", EncodeDestination(parser.result.sourceHash)));
   if (!IsVoteAuthentic(tx, parser.result.sourceHash, inputs))
-    return state.Invalid(false, REJECT_VOTE_INAUTHENTIC, strprintf("inauthentic-vote (%s)", parser.result.targetAddress.ToString()));
+    return state.Invalid(false, REJECT_VOTE_INAUTHENTIC, strprintf("inauthentic-vote (%s)", EncodeDestination(parser.result.targetHash)));
   if (!SufficientMinerrank(parser.result.sourceHash))
-    return state.Invalid(false, REJECT_VOTE_INSUFFICIENT, strprintf("insufficient-minerrank (%s)", parser.result.sourceAddress.ToString()));
+    return state.Invalid(false, REJECT_VOTE_INSUFFICIENT, strprintf("insufficient-minerrank (%s)", EncodeDestination(parser.result.sourceHash)));
 
   for (auto it = votes.begin(); it != votes.end(); it++) {
     if (IsVoteInMempool(*it))
@@ -82,7 +73,7 @@ bool IsVoteAuthentic(const CTransaction &tx, const CKeyID &sourceHash, const CCo
   CTxDestination address;
   ExtractDestination(coin.out.scriptPubKey, address);
   CKeyID hash;
-  CBitcoinAddress(address).GetKeyID(hash);
+  hash = boost::get<CKeyID>(address);
   return hash == sourceHash;
 }
 
@@ -140,7 +131,7 @@ void CVote::Invert()
 
 std::string CVote::ToString() const
 {
-  return strprintf("CLEAN %s %s %s", sourceAddress.ToString(), VoteTypeStr(type), targetAddress.ToString());
+  return strprintf("CLEAN %s %s %s", EncodeDestination(sourceHash), VoteTypeStr(type), EncodeDestination(targetHash));
 }
 
 bool operator<(const CVote &v1, const CVote &v2)
@@ -246,7 +237,7 @@ bool CScoreKeeper::Sufficient(const CKeyID &hash)
   // emergency fallback - if there are ever fewer than three miners with sufficient score,
   // open for all and hope for the best
   if (active < VOTE_MIN_ACTIVE) {
-    LogPrintf("fallback approve %s active %i\n", CBitcoinAddress(hash).ToString(), active);
+    LogPrintf("fallback approve %s active %i\n", EncodeDestination(hash), active);
     return true;
   }
   return scores[hash].minerrank >= 100;
@@ -256,7 +247,7 @@ std::string CScoreKeeper::ToString() const
 {
   std::string str;
   for(auto it=scores.begin(); it != scores.end(); ++it) {
-    str += strprintf("%s %s ", CBitcoinAddress(it->first).ToString().substr(0, 8), it->second.ToString());
+    str += strprintf("%s %s ", EncodeDestination(it->first).substr(0, 8), it->second.ToString());
   }
   return strprintf("CScoreKeeper(height=%i active=%i, scores= %s)", height, active, str);
 }
@@ -290,12 +281,12 @@ void CVoteParser::Init(const std::string s)
   } else {
     token = str.substr(pos, next-pos);
   }
-  result.sourceAddress = CBitcoinAddress(token);
-  if (!result.sourceAddress.IsValid()) {
+  CTxDestination sourceDest = DecodeDestination(token);
+  if (!IsValidDestination(sourceDest)) {
     done = true;
     return;
   }
-  result.sourceAddress.GetKeyID(result.sourceHash);
+  result.sourceHash = boost::get<CKeyID>(sourceDest);
   if (next == std::string::npos)
     pos = str.length();
 }
@@ -330,18 +321,13 @@ void CVoteParser::Next()
   }
 
   result.type = type;
-  result.targetAddress = CBitcoinAddress(token);
-  if (!result.targetAddress.IsValid()) {
+
+  CTxDestination targetDest = DecodeDestination(token);
+  if (!IsValidDestination(targetDest)) {
     done = true;
     return;
   }
-  result.targetAddress.GetKeyID(result.targetHash);
-  /*
-  if (result.targetHash == result.sourceHash) {
-    done = true;
-    return;
-  }
-  */
+  result.targetHash = boost::get<CKeyID>(targetDest);
   valid = true;
   if (next == std::string::npos)
     pos = str.length();
