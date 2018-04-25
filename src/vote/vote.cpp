@@ -190,9 +190,8 @@ void CScoreKeeper::Add(const CVote &vote)
   LogPrintf("new %s active %i ", scores[vote.targetHash].ToString(), active);
 
   // run through confirmees, dole out weight
-  LogPrintf("adjusting weight ");
   for (auto it = confirmees[vote.targetHash].begin(); it != confirmees[vote.targetHash].end(); ) {
-    LogPrintf("%s ", EncodeDestination(vote.targetHash).substr(0,8));
+    LogPrintf("weight %s thanks to %s on %s", EncodeDestination(it->hash).substr(0,8), EncodeDestination(vote.sourceHash).substr(0,8), EncodeDestination(vote.targetHash).substr(0,8));
     if (it->height + VOTE_WINDOW < height) {
       LogPrintf("apply window %s on %i ", EncodeDestination(it->hash), it->height);
       it = confirmees[vote.targetHash].erase(it);
@@ -200,7 +199,7 @@ void CScoreKeeper::Add(const CVote &vote)
     }
 
     if (vote.type == it->type) {
-      LogPrintf("weight old %d ", scores[it->hash].weight);
+      LogPrintf("old %d ", scores[it->hash].weight);
       if (scores[it->hash].cycle > VOTE_WEIGHT_CYCLE)
         scores[it->hash].cycle = 0;
       if (scores[it->hash].cycle == 0) {
@@ -208,7 +207,7 @@ void CScoreKeeper::Add(const CVote &vote)
         scores[it->hash].delta =  scores[it->hash].delta * VOTE_WEIGHT_FACTOR;
         LogPrintf("new %d ", scores[it->hash].weight);
       } else {
-        LogPrintf("hold for cycle %i", scores[it->hash].weight, scores[it->hash].cycle);
+        LogPrintf("hold at %i for cycle %i", scores[it->hash].weight, scores[it->hash].cycle);
       }
       scores[it->hash].cycle += 1;
     }
