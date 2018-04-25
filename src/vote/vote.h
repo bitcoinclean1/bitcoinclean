@@ -38,6 +38,7 @@ static const unsigned char REJECT_VOTE_MEMPOOL = 0x66;
 static const int VOTE_WEIGHT_CYCLE = 4;
 static const double VOTE_WEIGHT_FACTOR = 89.0/113.0;
 static const double VOTE_ATTRITION_RATE = 1.000087644373237;
+static const double VOTE_MINERRANK_CUTOFF = 100.0;
 
 const std::string ScriptToString(const CScript &script, int n=0);
 const CKeyID ExtractDestination(const CScript &scriptPubKey);
@@ -97,7 +98,7 @@ class CScore
     std::string ToString() const;
 };
 
-struct confirmee_str
+struct confirmee_struct
 {
   int height;
   CKeyID hash;
@@ -112,7 +113,7 @@ struct confirmee_str
   }
 };
 
-typedef confirmee_str confirmee_t;
+typedef confirmee_struct confirmee_t;
 
 class CScoreKeeper
 {
