@@ -251,6 +251,14 @@ bool CScoreKeeper::Sufficient(const CKeyID &hash)
   return scores[hash].minerrank >= 100;
 }
 
+void CScoreKeeper::Attrit()
+{
+  LogPrintf("applying block attrition to minerrank\n");
+  for (auto it = scores.begin(); it != scores.end();++it) {
+    it->second.minerrank /= VOTE_ATTRITION_RATE;
+  }
+}
+
 std::string CScoreKeeper::ToString() const
 {
   std::string str;
@@ -344,7 +352,10 @@ void CVoteParser::Next()
 void ProcessBlock(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex *pindex)
 {
   keeper.height = pindex->nHeight;
+  LogPrintf("clearing old locks ");
   keeper.Window();
+  LogPrintf("applying per-block minerrank attrition ");
+  keeper.Attrit();
   CVoteParser parser;
   for (size_t i = 0; i < pblock->vtx.size(); i++) {
     if (!IsVoteTx(*pblock->vtx[i]))

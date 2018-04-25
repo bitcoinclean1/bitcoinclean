@@ -35,8 +35,9 @@ static const unsigned char REJECT_VOTE_SELF = 0x64;
 static const unsigned char REJECT_VOTE_LOCKED = 0x65;
 static const unsigned char REJECT_VOTE_MEMPOOL = 0x66;
 
-static const unsigned char VOTE_WEIGHT_CYCLE = 4;
-static const unsigned char VOTE_WEIGHT_FACTOR = 89.0/113.0;
+static const int VOTE_WEIGHT_CYCLE = 4;
+static const double VOTE_WEIGHT_FACTOR = 89.0/113.0;
+static const double VOTE_ATTRITION_RATE = 1.000087644373237;
 
 const std::string ScriptToString(const CScript &script, int n=0);
 const CKeyID ExtractDestination(const CScript &scriptPubKey);
