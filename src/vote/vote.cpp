@@ -154,6 +154,19 @@ bool operator<(const CVote &v1, const CVote &v2)
     return false;
 }
 
+void CScoreKeeper::UpdateActive(double last, double current)
+{
+  int lastActive = active;
+  if (last < VOTE_MINERRANK_CUTOFF && current >= VOTE_MINERRANK_CUTOFF)
+    ++active;
+  else if (current < VOTE_MINERRANK_CUTOFF && last >= VOTE_MINERRANK_CUTOFF)
+    --active;
+  if (lastActive < VOTE_MIN_ACTIVE && ! (active < VOTE_MIN_ACTIVE))
+    LogPrintf("fallback mode disabled ");
+  if (active < VOTE_MIN_ACTIVE && ! (lastActive < VOTE_MIN_ACTIVE))
+    LogPrintf("fallback mode enabled ");
+}
+
 void CScoreKeeper::Add(const CVote &vote)
 {
   LogPrintf("add vote old %s new %s active %i ", vote.ToString(), scores[vote.targetHash].ToString(), active);
@@ -172,15 +185,7 @@ void CScoreKeeper::Add(const CVote &vote)
   }
   scores[vote.targetHash].minerrank += rankchange;
 
-  int lastActive = active;
-  if (last < VOTE_MINERRANK_CUTOFF && scores[vote.targetHash].minerrank >= VOTE_MINERRANK_CUTOFF)
-    ++active;
-  else if (scores[vote.targetHash].minerrank < VOTE_MINERRANK_CUTOFF && last >= VOTE_MINERRANK_CUTOFF)
-    --active;
-  if (lastActive < VOTE_MIN_ACTIVE && ! (active < VOTE_MIN_ACTIVE))
-    LogPrintf("fallback mode disabled ", scores[vote.targetHash].ToString());
-  if (active < VOTE_MIN_ACTIVE && ! (lastActive < VOTE_MIN_ACTIVE))
-    LogPrintf("fallback mode enabled ", scores[vote.targetHash].ToString());
+  UpdateActive(last, scores[vote.targetHash].minerrank);
 
   LogPrintf("new %s active %i ", scores[vote.targetHash].ToString(), active);
 
@@ -261,7 +266,9 @@ void CScoreKeeper::Attrit()
 {
   LogPrintf("applying block attrition to minerrank\n");
   for (auto it = scores.begin(); it != scores.end();++it) {
+    double last = it->second.minerrank;
     it->second.minerrank /= VOTE_ATTRITION_RATE;
+    UpdateActive(last, it->second.minerrank);
   }
 }
 

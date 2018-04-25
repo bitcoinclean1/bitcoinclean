@@ -129,6 +129,7 @@ class CScoreKeeper
     void Attrit();
     void Window();
     bool Sufficient(const CKeyID &hash);
+    void UpdateActive(double last, double current);
 
     ADD_SERIALIZE_METHODS;
     template <typename Stream, typename Operation>
