@@ -24,16 +24,20 @@
 #include "util.h"
 #include "utilmoneystr.h"
 #include "vote.h"
+
+#ifdef ENABLE_WALLET
 #include "wallet/coincontrol.h"
 #include "wallet/feebumper.h"
 #include "wallet/fees.h"
 #include "wallet/wallet.h"
 #include "wallet/walletdb.h"
+#endif
 
 #include <stdint.h>
 
 #include <univalue.h>
 
+#ifdef ENABLE_WALLET
 UniValue emitvote(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 1)
@@ -268,6 +272,7 @@ UniValue emitvote(const JSONRPCRequest& request)
     });
     return hashTx.GetHex();
 }
+#endif
 
 UniValue listvotescore(const JSONRPCRequest& request)
 {
@@ -347,7 +352,7 @@ UniValue listvotelock(const JSONRPCRequest& request)
     int height = -1;
     if (!request.params[0].isNull())
       height = request.params[0].get_int();
-    CScoreKeeper k = GetScoreKeeper();
+    CScoreKeeper k = GetScoreKeeper(height);
 
     UniValue ret(UniValue::VARR);
 
@@ -364,7 +369,9 @@ UniValue listvotelock(const JSONRPCRequest& request)
 
 static const CRPCCommand commands[] =
 {
+#ifdef ENABLE_WALLET
     { "vote",  "emitvote",                 &emitvote,             {"vote"} },
+#endif;
     { "vote",  "getvotescore",             &getvotescore,         {"height"} },
     { "vote",  "listvotescore",            &listvotescore,        {"address"} },
     { "vote",  "listvotelock",             &listvotelock,         {} },
