@@ -68,7 +68,7 @@ UniValue emitvote(const JSONRPCRequest& request)
       //LogPrintf("T %s\n", parser.result.ToString());
     }
 
-    if (parser.valid == false)
+    if (!parser.valid)
       throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Vote syntax error: \"" + parser.str + "\"\n" + std::string(parser.pos + 20, ' ') + "^");
     CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
     if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
