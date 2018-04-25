@@ -170,6 +170,7 @@ class CVoteInterface : public CValidationInterface
 //RPC helpers
 
 CScoreKeeper GetScoreKeeper(int height = -1);
-CScore GetVoteScore(const CKeyID &hash);
+bool GetVoteScore(const CKeyID &hash, CScore &score);
 
 #endif // BITCOIN_VOTE_H
+
