@@ -658,6 +658,13 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         // Bring the best block into scope
         view.GetBestBlock();
 
+        // Let only valid votes reach mempool
+        if (IsVoteTx(tx)) {
+            if(!ValidateVoteTx(tx, state, view)) {
+                return false;
+            }
+        }
+
         // we have all inputs cached now, so switch back to dummy, so we don't need to keep lock on mempool
         view.SetBackend(dummy);
 
@@ -1419,12 +1426,6 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
                     // peering with non-upgraded nodes even after soft-fork
                     // super-majority signaling has occurred.
                     return state.DoS(100,false, REJECT_INVALID, strprintf("mandatory-script-verify-flag-failed (%s)", ScriptErrorString(check.GetScriptError())));
-                }
-            }
-
-            if (IsVoteTx(tx)) {
-                if(!ValidateVoteTx(tx, state, inputs)) {
-                    return false;
                 }
             }
 
