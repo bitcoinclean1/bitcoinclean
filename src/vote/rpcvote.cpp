@@ -26,6 +26,7 @@
 #include "vote.h"
 #include "wallet/coincontrol.h"
 #include "wallet/feebumper.h"
+#include "wallet/fees.h"
 #include "wallet/wallet.h"
 #include "wallet/walletdb.h"
 
@@ -99,7 +100,7 @@ UniValue emitvote(const JSONRPCRequest& request)
         const CScript& scriptPubKey = out.tx->tx->vout[out.i].scriptPubKey;
         bool fValidAddress = ExtractDestination(scriptPubKey, address);
         if (fValidAddress) {
-            if (parser.result.sourceAddress == CBitcoinAddress(address)) {
+            if (parser.result.sourceHash == boost::get<CKeyID>(address)) {
               sourceAddressInWallet = true;
               txid = out.tx->GetHash();
               nOutput = out.i;
@@ -122,10 +123,10 @@ UniValue emitvote(const JSONRPCRequest& request)
         //entry.push_back(Pair("safe", out.fSafe));
     }
     if (!sourceAddressInWallet)
-      throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "source address not in wallet: " + parser.result.sourceAddress.ToString());
+      throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "source address not in wallet: " + EncodeDestination(parser.result.sourceHash));
 
     if (!SufficientMinerrank(parser.result.sourceHash))
-      throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Insufficient minerrank for source address: " + parser.result.sourceAddress.ToString());
+      throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Insufficient minerrank for source address: " + EncodeDestination(parser.result.sourceHash));
 
 //    oo.append(sourceAddressInWallet ? "yes" : "no");
 //    return oo;
@@ -141,11 +142,11 @@ UniValue emitvote(const JSONRPCRequest& request)
     CTxOut strOut(0, CScript() << OP_RETURN << data);
     mtx.vout.push_back(strOut);
 
-    CScript scriptPubKey = GetScriptForDestination(parser.result.sourceAddress.Get());
+    CScript scriptPubKey = GetScriptForDestination(parser.result.sourceHash);
 
     CCoinControl coinControl;
     unsigned int nBytes = GetVirtualTransactionSize(mtx);
-    CAmount fee = CWallet::GetMinimumFee(nBytes, coinControl, ::mempool, ::feeEstimator, nullptr /* FeeCalculation */);
+    CAmount fee = GetMinimumFee(nBytes, coinControl, ::mempool, ::feeEstimator, nullptr /* FeeCalculation */);
 
     CAmount changeAmount = sourceAmount - fee;
     CTxOut changeOut(changeAmount, scriptPubKey);
@@ -243,7 +244,8 @@ UniValue emitvote(const JSONRPCRequest& request)
         CValidationState state;
         bool fMissingInputs;
         bool fLimitFree = true;
-        if (!AcceptToMemoryPool(mempool, state, std::move(tx), fLimitFree, &fMissingInputs, nullptr, false, maxTxFee)) {
+
+        if (!AcceptToMemoryPool(mempool, state, std::move(tx), &fMissingInputs, nullptr, true, maxTxFee)) {
             if (state.IsInvalid()) {
                 throw JSONRPCError(RPC_TRANSACTION_REJECTED, strprintf("%i: %s", state.GetRejectCode(), state.GetRejectReason()));
             } else {
@@ -292,7 +294,7 @@ UniValue listvotescore(const JSONRPCRequest& request)
 
     for (auto s: k.scores) {
       UniValue entry(UniValue::VOBJ);
-      entry.push_back(Pair("address", CBitcoinAddress(s.first).ToString()));
+      entry.push_back(Pair("address", EncodeDestination(s.first)));
       entry.push_back(Pair("weight", s.second.weight));
       entry.push_back(Pair("minerrank", s.second.minerrank));
       ret.push_back(entry);
@@ -315,12 +317,11 @@ UniValue getvotescore(const JSONRPCRequest& request)
             + HelpExampleRpc("getvotescore", "1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX")
         );
 
-    CBitcoinAddress address(request.params[0].get_str());
-    if (!address.IsValid())
+    CTxDestination dest = DecodeDestination(request.params[0].get_str());
+    if (!IsValidDestination(dest))
       throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "invalid address: " + request.params[0].get_str());
 
-    CKeyID hash;
-    address.GetKeyID(hash);
+    CKeyID hash = boost::get<CKeyID>(dest);
     CScore score = GetVoteScore(hash);
 
     UniValue ret(UniValue::VOBJ);
@@ -362,12 +363,11 @@ UniValue listvotelock(const JSONRPCRequest& request)
 }
 
 static const CRPCCommand commands[] =
-{   //  category              name                        actor (function)           okSafeMode
-    //  --------------------- ------------------------    -----------------------    ----------
-    { "vote",                 "emitvote",                 &emitvote,                 true,  {"vote"} },
-    { "vote",                 "getvotescore",             &getvotescore,             true,  {"height"} },
-    { "vote",                 "listvotescore",            &listvotescore,            true,  {"address"} },
-    { "vote",                 "listvotelock",             &listvotelock,             true,  {} },
+{
+    { "vote",  "emitvote",                 &emitvote,             {"vote"} },
+    { "vote",  "getvotescore",             &getvotescore,         {"height"} },
+    { "vote",  "listvotescore",            &listvotescore,        {"address"} },
+    { "vote",  "listvotelock",             &listvotelock,         {} },
 };
 
 void RegisterVoteRPCCommands(CRPCTable &t)

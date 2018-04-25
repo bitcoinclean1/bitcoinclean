@@ -1997,8 +1997,12 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                                block.vtx[0]->GetValueOut(), blockReward),
                                REJECT_INVALID, "bad-cb-amount");
 
-    if(!SufficientMinerrank(ExtractDestination(block.vtx[0]->vout[0].scriptPubKey)))
+    {
+      CTxDestination dest;
+      ExtractDestination(block.vtx[0]->vout[0].scriptPubKey, dest);
+      if(!SufficientMinerrank(boost::get<CKeyID>(dest)))
         return state.DoS(100, error("ConnectBlock(): insufficient minerrank for coinbase destination\n"), REJECT_INVALID, "insufficient-minerrank");
+    }
 
     if (!control.Wait())
         return state.DoS(100, error("%s: CheckQueue failed", __func__), REJECT_INVALID, "block-validation-failed");
