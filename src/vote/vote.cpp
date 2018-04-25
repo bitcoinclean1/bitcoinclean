@@ -173,9 +173,9 @@ void CScoreKeeper::Add(const CVote &vote)
   scores[vote.targetHash].minerrank += rankchange;
 
   int lastActive = active;
-  if (last < 100.0 && scores[vote.targetHash].minerrank >= 100.0)
+  if (last < VOTE_MINERRANK_CUTOFF && scores[vote.targetHash].minerrank >= VOTE_MINERRANK_CUTOFF)
     ++active;
-  else if (scores[vote.targetHash].minerrank < 100.0 && last >= 100.0)
+  else if (scores[vote.targetHash].minerrank < VOTE_MINERRANK_CUTOFF && last >= VOTE_MINERRANK_CUTOFF)
     --active;
   if (lastActive < VOTE_MIN_ACTIVE && ! (active < VOTE_MIN_ACTIVE))
     LogPrintf("fallback mode disabled ", scores[vote.targetHash].ToString());
@@ -185,10 +185,11 @@ void CScoreKeeper::Add(const CVote &vote)
   LogPrintf("new %s active %i ", scores[vote.targetHash].ToString(), active);
 
   // run through confirmees, dole out weight
+  LogPrintf("adjusting weight ");
   for (auto it = confirmees[vote.targetHash].begin(); it != confirmees[vote.targetHash].end(); ) {
-    // prune to appox 3 month window
-    if (it->height < height) {
-      LogPrintf("prune %u ", it->height);
+    LogPrintf("%s ", EncodeDestination(vote.targetHash).substr(0,8));
+    if (it->height + VOTE_WINDOW < height) {
+      LogPrintf("apply window %s on %i ", EncodeDestination(it->hash), it->height);
       it = confirmees[vote.targetHash].erase(it);
       continue;
     }
@@ -204,7 +205,7 @@ void CScoreKeeper::Add(const CVote &vote)
       } else {
         LogPrintf("hold for cycle %i", scores[it->hash].weight, scores[it->hash].cycle);
       }
-      ++scores[it->hash].cycle;
+      scores[it->hash].cycle += 1;
     }
     LogPrintf("\n");
     ++it;
@@ -216,7 +217,7 @@ void CScoreKeeper::Add(const CVote &vote)
   confirmee.type = vote.type;
 
   confirmees[vote.targetHash].push_back(confirmee);
-  LogPrintf("add for confirm,");
+  LogPrintf("reg %s to receive weight on confirm %s ", EncodeDestination(vote.sourceHash).substr(0,8), EncodeDestination(vote.targetHash).substr(0,8));
 
   voteLock[vote] = height;
   LogPrintf("lock at %i to %i", height, height + VOTE_WINDOW);
@@ -250,7 +251,10 @@ bool CScoreKeeper::Sufficient(const CKeyID &hash)
     LogPrintf("fallback approve %s active %i\n", EncodeDestination(hash), active);
     return true;
   }
-  return scores[hash].minerrank >= 100;
+  auto it = scores.find(hash);
+  if (it == scores.end())
+    return false;
+  return it->second.minerrank >= VOTE_MINERRANK_CUTOFF;
 }
 
 void CScoreKeeper::Attrit()
