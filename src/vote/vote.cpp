@@ -193,8 +193,16 @@ void CScoreKeeper::Add(const CVote &vote)
 
     if (vote.type == it->type) {
       LogPrintf("weight old %d ", scores[it->hash].weight);
-      scores[it->hash].weight += (5 - scores[it->hash].weight) * 0.01;
-      LogPrintf("new %d ", scores[it->hash].weight);
+      if (scores[it->hash].cycle > VOTE_WEIGHT_CYCLE)
+        scores[it->hash].cycle = 0;
+      if (scores[it->hash].cycle == 0) {
+        scores[it->hash].weight += scores[it->hash].delta;
+        scores[it->hash].delta =  scores[it->hash].delta * VOTE_WEIGHT_FACTOR;
+        LogPrintf("new %d ", scores[it->hash].weight);
+      } else {
+        LogPrintf("hold for cycle %i", scores[it->hash].weight, scores[it->hash].cycle);
+      }
+      ++scores[it->hash].cycle;
     }
     LogPrintf("\n");
     ++it;

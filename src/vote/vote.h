@@ -35,6 +35,9 @@ static const unsigned char REJECT_VOTE_SELF = 0x64;
 static const unsigned char REJECT_VOTE_LOCKED = 0x65;
 static const unsigned char REJECT_VOTE_MEMPOOL = 0x66;
 
+static const unsigned char VOTE_WEIGHT_CYCLE = 4;
+static const unsigned char VOTE_WEIGHT_FACTOR = 89.0/113.0;
+
 const std::string ScriptToString(const CScript &script, int n=0);
 const CKeyID ExtractDestination(const CScript &scriptPubKey);
 
@@ -78,12 +81,16 @@ class CScore
   public:
     double minerrank = 0;
     double weight = 0;
+    double delta = 1;
+    double cycle = 0;
 
     ADD_SERIALIZE_METHODS;
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action) {
       READWRITE(minerrank);
       READWRITE(weight);
+      READWRITE(delta);
+      READWRITE(cycle);
     }
 
     std::string ToString() const;

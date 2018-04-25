@@ -371,7 +371,7 @@ static const CRPCCommand commands[] =
 {
 #ifdef ENABLE_WALLET
     { "vote",  "emitvote",                 &emitvote,             {"vote"} },
-#endif;
+#endif
     { "vote",  "getvotescore",             &getvotescore,         {"height"} },
     { "vote",  "listvotescore",            &listvotescore,        {"address"} },
     { "vote",  "listvotelock",             &listvotelock,         {} },
