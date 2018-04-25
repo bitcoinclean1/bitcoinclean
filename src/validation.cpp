@@ -1998,9 +1998,12 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                                REJECT_INVALID, "bad-cb-amount");
 
     {
-      CTxDestination dest;
-      ExtractDestination(block.vtx[0]->vout[0].scriptPubKey, dest);
-      if(!SufficientMinerrank(boost::get<CKeyID>(dest)))
+      CTxDestination destination;
+      ExtractDestination(block.vtx[0]->vout[0].scriptPubKey, destination);
+      CKeyID* hash = boost::get<CKeyID>(&destination);
+      if (!hash)
+        return state.DoS(100, error("ConnectBlock(): pubkey address required as coinbase destination"));
+      if(!SufficientMinerrank(*hash))
         return state.DoS(100, error("ConnectBlock(): insufficient minerrank for coinbase destination\n"), REJECT_INVALID, "insufficient-minerrank");
     }
 
