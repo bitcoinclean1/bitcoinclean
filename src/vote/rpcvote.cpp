@@ -58,7 +58,7 @@ UniValue emitvote(const JSONRPCRequest& request)
           );
 
     if (request.params.size() > 1)
-      throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Too many vote strings (on the command line, please enclose your string in paranthesis)");
+      throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Too many vote strings (on the command line, please enclose your vote string in quotes, e.g. emitvote \"CLEAN sourceaddr UP targetaddr\")");
 
     CVoteParser parser;
     parser.Init(request.params[0].get_str());

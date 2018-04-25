@@ -2002,9 +2002,9 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
       ExtractDestination(block.vtx[0]->vout[0].scriptPubKey, destination);
       CKeyID* hash = boost::get<CKeyID>(&destination);
       if (!hash)
-        return state.DoS(100, error("ConnectBlock(): pubkey address required as coinbase destination"));
+        return state.DoS(100, error("ConnectBlock(): pubkey address required coinbase destination %s (use gettoaddress -addresstype legacy)\n", EncodeDestination(destination)), REJECT_INVALID, "pubkey-address-required");
       if(!SufficientMinerrank(*hash))
-        return state.DoS(100, error("ConnectBlock(): insufficient minerrank for coinbase destination\n"), REJECT_INVALID, "insufficient-minerrank");
+        return state.DoS(100, error("ConnectBlock(): insufficient minerrank for coinbase destination %s\n", EncodeDestination(destination)), REJECT_INVALID, "insufficient-minerrank");
     }
 
     if (!control.Wait())
