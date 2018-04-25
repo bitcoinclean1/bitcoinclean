@@ -322,12 +322,17 @@ UniValue getvotescore(const JSONRPCRequest& request)
             + HelpExampleRpc("getvotescore", "1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX")
         );
 
-    CTxDestination dest = DecodeDestination(request.params[0].get_str());
-    if (!IsValidDestination(dest))
+    CTxDestination destination = DecodeDestination(request.params[0].get_str());
+    if (!IsValidDestination(destination))
       throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "invalid address: " + request.params[0].get_str());
 
-    CKeyID hash = boost::get<CKeyID>(dest);
-    CScore score = GetVoteScore(hash);
+    const CKeyID* hash = boost::get<CKeyID>(&destination);
+    if (!hash)
+      throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "pubkey-address-required (use getnewaddress -addresstype legacy)" + request.params[0].get_str());
+
+    CScore score;
+    if (!GetVoteScore(*hash, score))
+      throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "score-not-found " + request.params[0].get_str());
 
     UniValue ret(UniValue::VOBJ);
     ret.push_back(Pair("weight", score.weight));

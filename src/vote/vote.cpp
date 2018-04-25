@@ -297,12 +297,17 @@ void CVoteParser::Init(const std::string s)
   } else {
     token = str.substr(pos, next-pos);
   }
-  CTxDestination sourceDest = DecodeDestination(token);
-  if (!IsValidDestination(sourceDest)) {
+  CTxDestination destination = DecodeDestination(token);
+  if (!IsValidDestination(destination)) {
     done = true;
     return;
   }
-  result.sourceHash = boost::get<CKeyID>(sourceDest);
+  const CKeyID* hash = boost::get<CKeyID>(&destination);
+  if (!hash) {
+    done = true;
+    return;
+  }
+  result.sourceHash = *hash;
   if (next == std::string::npos)
     pos = str.length();
 }
@@ -338,12 +343,17 @@ void CVoteParser::Next()
 
   result.type = type;
 
-  CTxDestination targetDest = DecodeDestination(token);
-  if (!IsValidDestination(targetDest)) {
+  CTxDestination destination = DecodeDestination(token);
+  if (!IsValidDestination(destination)) {
     done = true;
     return;
   }
-  result.targetHash = boost::get<CKeyID>(targetDest);
+  const CKeyID* hash = boost::get<CKeyID>(&destination);
+  if (!hash) {
+    done = true;
+    return;
+  }
+  result.targetHash = *hash;
   valid = true;
   if (next == std::string::npos)
     pos = str.length();
@@ -465,7 +475,12 @@ CScoreKeeper GetScoreKeeper(int height)
   return k;
 }
 
-CScore GetVoteScore(const CKeyID &hash)
+bool GetVoteScore(const CKeyID &hash, CScore &score)
 {
-  return keeper.scores[hash];
+  auto it=keeper.scores.find(hash);
+  if (it == keeper.scores.end())
+    return false;
+  score = it->second;
+  return true;
 }
+
