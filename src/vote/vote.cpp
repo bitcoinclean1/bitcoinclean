@@ -7,7 +7,6 @@
 #include <regex>
 
 CScoreKeeper keeper;
-CVoteParser parser;
 CVoteDB *voteDB = nullptr;
 
 const std::string ScriptToString(const CScript &script, int n)
@@ -32,12 +31,14 @@ bool IsVoteTx(const CTransaction &tx)
   return true;
 }
 
-bool ValidateVoteTx(const CTransaction &tx, CValidationState& state, const CCoinsViewCache &inputs)
+bool ValidateVoteTx(const CTransaction &tx, CValidationState &state, const CCoinsViewCache &inputs)
 {
+  CVoteParser parser;
   parser.Init(ScriptToString(tx.vout[0].scriptPubKey));
   LogPrintf("scanvote detected %s\n", parser.str);
   std::set<CKeyID> targetHashes;
   std::vector<CVote> votes;
+
   while(!parser.done) {
     parser.Next();
     std::pair<std::set<CKeyID>::iterator,bool> ins = targetHashes.insert(parser.result.targetHash);
@@ -45,6 +46,7 @@ bool ValidateVoteTx(const CTransaction &tx, CValidationState& state, const CCoin
       return state.Invalid(false, REJECT_VOTE_INVALID, strprintf("repeated-vote-target (%s)", EncodeDestination(parser.result.targetHash)));
     votes.push_back(parser.result);
   }
+
   if (!parser.valid)
     return state.Invalid(false, REJECT_VOTE_INVALID, strprintf("invalid-vote-syntax (%i %s)", parser.pos, parser.token));
   if (parser.result.sourceHash == parser.result.targetHash)
@@ -271,21 +273,15 @@ std::string CScoreKeeper::ToString() const
 void CVoteParser::Init(const std::string s)
 {
   str = s;
-  pos = 0;
-  next = str.find(" ");
+  pos = str.find("CLEAN");
+  if (pos == std::string::npos) {
+    done = true;
+    return;
+  }
+  next = str.find(" ", pos);
   valid = false;
   done = false;
   if (next == std::string::npos) {
-    done = true;
-    return;
-  }
-  int o = str.find("CLEAN");
-  if (next == std::string::npos) {
-    done = true;
-    return;
-  }
-  token = str.substr(o, next-o);
-  if (token != "CLEAN") {
     done = true;
     return;
   }
@@ -366,11 +362,11 @@ void ProcessBlock(const std::shared_ptr<const CBlock>& pblock, const CBlockIndex
   keeper.Window();
   LogPrintf("applying per-block minerrank attrition ");
   keeper.Attrit();
-  CVoteParser parser;
   for (size_t i = 0; i < pblock->vtx.size(); i++) {
     if (!IsVoteTx(*pblock->vtx[i]))
       continue;
 
+    CVoteParser parser;
     CTransaction tx = *pblock->vtx[i];
     parser.Init(ScriptToString(tx.vout[0].scriptPubKey));
 
@@ -413,6 +409,7 @@ void CVoteInterface::TransactionAddedToMempool(const CTransactionRef& ptx)
 {
   CTransaction tx = *ptx;
   if (IsVoteTx(tx)) {
+    CVoteParser parser;
     parser.Init(ScriptToString(tx.vout[0].scriptPubKey));
     while(!parser.done) {
       parser.Next();
