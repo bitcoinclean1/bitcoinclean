@@ -1999,17 +1999,37 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                                REJECT_INVALID, "bad-cb-amount");
 
     {
-      CTxDestination destination;
-      ExtractDestination(block.vtx[0]->vout[0].scriptPubKey, destination);
-      if (destination.which() == 0) {
-        LogPrintf("Warning- type 0 coinbase destination\n");
-      } else {
-        CKeyID* hash = boost::get<CKeyID>(&destination);
-        if (!hash)
+      LogPrintf("coinbase ");
+      for (auto it = block.vtx[0]->vout.begin(); it != block.vtx[0]->vout.end(); ++it) {
+        CTxDestination destination;
+        ExtractDestination(it->scriptPubKey, destination);
+        LogPrintf("vout[%i] destination which() is %i ", it - block.vtx[0]->vout.begin(), destination.which());
+        switch (destination.which()) {
+        case 0:
+          LogPrintf("ignore ");
+          continue;
+        case 1:
+          {
+            LogPrintf("pubkey hash ");
+            CKeyID* hash = boost::get<CKeyID>(&destination);
+            if (!hash) {
+              LogPrintf("invalid\n");
+              return state.DoS(100, error("ConnectBlock(): pubkey unknown error\n"));
+            }
+            LogPrintf("ok check minerrank ");
+            if(!SufficientMinerrank(*hash)) {
+              LogPrintf("insufficient\n");
+              return state.DoS(100, error("ConnectBlock(): insufficient minerrank for coinbase destination vout[%i] %s\n", it - block.vtx[0]->vout.begin(), EncodeDestination(destination)), REJECT_INVALID, "insufficient-minerrank");
+            }
+          }
+          LogPrintf("sufficient ");
+          continue;
+        default:
+          LogPrintf(" not pubkey\n");
           return state.DoS(100, error("ConnectBlock(): address type 1 (pubkey) required for coinbase destination %s, is type %i (use gettoaddress -addresstype legacy)\n", EncodeDestination(destination), destination.which()), REJECT_INVALID, "pubkey-address-required");
-        if(!SufficientMinerrank(*hash))
-          return state.DoS(100, error("ConnectBlock(): insufficient minerrank for coinbase destination %s\n", EncodeDestination(destination)), REJECT_INVALID, "insufficient-minerrank");
+        }
       }
+      LogPrintf(" validated \"clean\" per communty scoring\n");
     }
 
     if (!control.Wait())

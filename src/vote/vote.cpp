@@ -252,7 +252,7 @@ bool CScoreKeeper::Sufficient(const CKeyID &hash)
   // emergency fallback - if there are ever fewer than three miners with sufficient score,
   // open for all and hope for the best
   if (active < VOTE_MIN_ACTIVE) {
-    LogPrintf("fallback approve %s active %i\n", EncodeDestination(hash), active);
+    LogPrintf("fallback approve %s active %i ", EncodeDestination(hash), active);
     return true;
   }
   auto it = scores.find(hash);
