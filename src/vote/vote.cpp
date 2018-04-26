@@ -200,11 +200,10 @@ void CScoreKeeper::Add(const CVote &vote)
 
     if (vote.type == it->type) {
       LogPrintf("old %d ", scores[it->hash].weight);
-      if (scores[it->hash].cycle > VOTE_WEIGHT_CYCLE)
-        scores[it->hash].cycle = 0;
-      if (scores[it->hash].cycle == 0) {
-        scores[it->hash].weight += scores[it->hash].delta;
+      scores[it->hash].weight += scores[it->hash].delta / VOTE_WEIGHT_CYCLE; // linear interpolate
+      if (scores[it->hash].cycle >= VOTE_WEIGHT_CYCLE) {
         scores[it->hash].delta =  scores[it->hash].delta * VOTE_WEIGHT_FACTOR;
+        scores[it->hash].cycle = 0;
         LogPrintf("new %d ", scores[it->hash].weight);
       } else {
         LogPrintf("hold at %i for cycle %i", scores[it->hash].weight, scores[it->hash].cycle);
