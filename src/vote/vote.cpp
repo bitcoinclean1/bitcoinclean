@@ -72,11 +72,15 @@ bool ValidateVoteTx(const CTransaction &tx, CValidationState &state, const CCoin
 bool IsVoteAuthentic(const CTransaction &tx, const CKeyID &sourceHash, const CCoinsViewCache &inputs)
 {
   const Coin& coin = inputs.AccessCoin(tx.vin[0].prevout);
-  CTxDestination address;
-  ExtractDestination(coin.out.scriptPubKey, address);
-  CKeyID hash;
-  hash = boost::get<CKeyID>(address);
-  return hash == sourceHash;
+  CTxDestination destination;
+  ExtractDestination(coin.out.scriptPubKey, destination);
+  CKeyID *hash;
+  hash = boost::get<CKeyID>(&destination);
+  if (!hash) {
+    LogPrintf("Warning: Vote from nonlegacy %s\n", EncodeDestination(destination));
+    return false;
+  }
+  return *hash == sourceHash;
 }
 
 bool IsVoteLocked(const CVote &vote)

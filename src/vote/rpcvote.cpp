@@ -100,11 +100,14 @@ UniValue emitvote(const JSONRPCRequest& request)
     uint256 txid;
     int nOutput;
     for (const COutput& out : vecOutputs) {
-        CTxDestination address;
+        CTxDestination destination;
         const CScript& scriptPubKey = out.tx->tx->vout[out.i].scriptPubKey;
-        bool fValidAddress = ExtractDestination(scriptPubKey, address);
+        bool fValidAddress = ExtractDestination(scriptPubKey, destination);
         if (fValidAddress) {
-            if (parser.result.sourceHash == boost::get<CKeyID>(address)) {
+            CKeyID* hash = boost::get<CKeyID>(&destination);
+            if (!hash)
+              continue;
+            if (parser.result.sourceHash == *hash) {
               sourceAddressInWallet = true;
               txid = out.tx->GetHash();
               nOutput = out.i;
