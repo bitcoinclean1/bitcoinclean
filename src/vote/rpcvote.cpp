@@ -281,7 +281,7 @@ UniValue listvotescore(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() > 1)
         throw std::runtime_error(
-            "listapprovalscore Show approval scores based on approval transactions\n"
+            "listvotescore      Show vote scores for miner addresses\n"
             "\nArguments:\n"
             "1. \"height\"      (int, optional) The block height. Use the current block if omitted.'\n"
             "\nResult:\n"
@@ -348,7 +348,7 @@ UniValue listvotelock(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() > 1)
         throw std::runtime_error(
-            "listapprovalscore Show votes that are locked to to another recent vote (down after up and vice versa always possible)\n"
+            "listvotelock      Check how long a vote for the same miner is locked until it can be repeated. Note: It is always possible to reverse a vote.\n"
             "\nArguments:\n"
             "None"
             "\nResult:\n"
