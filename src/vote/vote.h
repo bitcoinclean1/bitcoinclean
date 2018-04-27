@@ -169,6 +169,8 @@ class CVoteInterface : public CValidationInterface
     void TransactionAddedToMempool(const CTransactionRef& ptx) override;
 };
 
+bool IsVoteActive();
+
 //RPC helpers
 
 CScoreKeeper GetScoreKeeper(int height = -1);

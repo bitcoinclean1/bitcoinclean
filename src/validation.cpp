@@ -2026,7 +2026,9 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
           continue;
         default:
           LogPrintf(" not pubkey\n");
-          return state.DoS(100, error("ConnectBlock(): address type 1 (pubkey) required for coinbase destination %s, is type %i (use gettoaddress -addresstype legacy)\n", EncodeDestination(destination), destination.which()), REJECT_INVALID, "pubkey-address-required");
+          if (IsVoteActive()) {
+            return state.DoS(100, error("ConnectBlock(): address type 1 (pubkey) required for coinbase destination %s, is type %i (use gettoaddress -addresstype legacy)\n", EncodeDestination(destination), destination.which()), REJECT_INVALID, "pubkey-address-required");
+          }
         }
       }
       LogPrintf(" validated \"clean\" per communty scoring\n");
