@@ -42,7 +42,7 @@ QString BitcoinUnits::longName(int unit)
     {
     case BCL: return QString("BCL");
     case mBCL: return QString("mBCL");
-    case uBCL: return QString::fromUtf8("µBCL (bits)");
+    case uBCL: return QString::fromUtf8("µBCL (michis)");
     default: return QString("???");
     }
 }
@@ -51,7 +51,7 @@ QString BitcoinUnits::shortName(int unit)
 {
     switch(unit)
     {
-    case uBCL: return QString::fromUtf8("bits");
+    case uBCL: return QString::fromUtf8("michis");
     default:   return longName(unit);
     }
 }
@@ -61,8 +61,8 @@ QString BitcoinUnits::description(int unit)
     switch(unit)
     {
     case BCL: return QString("Bitcoins");
-    case mBCL: return QString("Milli-Bitcoins (1 / 1" THIN_SP_UTF8 "000)");
-    case uBCL: return QString("Micro-Bitcoins (bits) (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+    case mBCL: return QString("Milli-bitcoinCleans (1 / 1" THIN_SP_UTF8 "000)");
+    case uBCL: return QString("Micro-bitcoinCleans (michis) (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
     default: return QString("???");
     }
 }
