@@ -339,7 +339,7 @@ public:
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
 
         fDefaultConsistencyChecks = true;
-        fRequireStandard = false;
+        fRequireStandard = true;
         fMineBlocksOnDemand = true;
 
         checkpointData = {
