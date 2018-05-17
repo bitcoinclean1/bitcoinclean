@@ -1,0 +1,17 @@
+before_script:
+  - apt-get update -qq
+  - apt-get install -y autoconf automake autotools-dev libsigsegv2 m4 libtool pkg-config build-essential git software-properties-common python-software-properties libdb++-dev bsdmainutils
+  - apt-get install -y libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev libboost-all-dev
+  - apt-get install -y openssl libcurl4-openssl-dev libsasl2-dev
+  - apt-get install -y libevent-dev
+  - add-apt-repository ppa:bitcoin/bitcoin
+  - apt-get update
+  - apt-get install -y libdb4.8-dev libdb4.8++-dev
+
+build_cmd:
+  script:
+    - /bin/bash ./autogen.sh
+    - ./configure
+    - chmod 777 share/genbuild.sh
+    - make
+    - make install
