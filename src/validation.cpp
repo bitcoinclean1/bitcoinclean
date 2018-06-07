@@ -925,7 +925,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         // invalid blocks (using TestBlockValidity), however allowing such
         // transactions into the mempool can be exploited as a DoS attack.
         unsigned int currentBlockScriptVerifyFlags = GetBlockScriptFlags(chainActive.Tip(), Params().GetConsensus());
-        if (!CheckInputsFromMempoolAndCache(tx, state, view, pool, currentBlockScriptVerifyFlags, true, txdata))
+        if (!CheckInputsFromMempoolAndCache(tx, state, view, pool, currentBlockScriptVerifyFlags | SCRIPT_ENABLE_SIGHASH_FORKID, true, txdata))
         {
             // If we're using promiscuousmempoolflags, we may hit this normally
             // Check if current block has some flags that scriptVerifyFlags
@@ -1766,8 +1766,6 @@ static unsigned int GetBlockScriptFlags(const CBlockIndex* pindex, const Consens
     if (pindex->nHeight >= consensusparams.RPHeight) {
         flags |= SCRIPT_VERIFY_STRICTENC;
     }
-   
-
     return flags;
 }
 

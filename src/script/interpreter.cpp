@@ -194,16 +194,6 @@ static bool HasForkId(const std::vector<uint8_t> &vchSig) {
     return ((vchSig[vchSig.size() - 1]) & SIGHASH_FORKID) == SIGHASH_FORKID;
 }
 
-static void CleanupScriptCode(CScript &scriptCode,
-                              const std::vector<uint8_t> &vchSig,
-                              uint32_t flags) {
-    // Drop the signature in scripts when SIGHASH_FORKID is not used.
-    bool hasForkId = HasForkId(vchSig);
-    if (!(flags & SCRIPT_ENABLE_SIGHASH_FORKID) || !hasForkId) {
-        scriptCode.FindAndDelete(CScript(vchSig));
-    }
-}
-
 
 bool static IsDefinedHashtypeSignature(const valtype &vchSig) {
     if (vchSig.size() == 0) {
@@ -232,15 +222,17 @@ bool CheckSignatureEncoding(const std::vector<unsigned char> &vchSig, unsigned i
         if (!IsDefinedHashtypeSignature(vchSig)) {
             return set_error(serror, SCRIPT_ERR_SIG_HASHTYPE);
         }
+	if (!serror) {
+          return true;
+	}
         bool usesForkId = HasForkId(vchSig);
         bool forkIdEnabled = (flags & SCRIPT_ENABLE_SIGHASH_FORKID);
-        if (!forkIdEnabled && usesForkId) {
-            return serror?set_error(serror, SCRIPT_ERR_ILLEGAL_FORKID):true;
+        if (!forkIdEnabled && usesForkId && serror) {
+            return set_error(serror, SCRIPT_ERR_ILLEGAL_FORKID);
         }
-        if (forkIdEnabled && !usesForkId) {
-            return serror?set_error(serror, SCRIPT_ERR_MUST_USE_FORKID):true;
+        if (forkIdEnabled && !usesForkId && serror) {
+            return set_error(serror, SCRIPT_ERR_MUST_USE_FORKID);
         }
-
     } 
     return true;
 }
@@ -922,12 +914,12 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                     if (sigversion == SIGVERSION_BASE) {
                         scriptCode.FindAndDelete(CScript(vchSig));
                     }
+		    int nHashType = vchSig.size() > 0?vchSig.back():0;
 
                     if (!CheckSignatureEncoding(vchSig, flags, serror) || !CheckPubKeyEncoding(vchPubKey, flags, sigversion, serror)) {
                         //serror is set
                         return false;
                     }
-                    CleanupScriptCode(scriptCode, vchSig, flags);
                     bool fSuccess = checker.CheckSig(vchSig, vchPubKey, scriptCode, sigversion, flags);
 
                     if (!fSuccess && (flags & SCRIPT_VERIFY_NULLFAIL) && vchSig.size())
@@ -936,6 +928,10 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                     popstack(stack);
                     popstack(stack);
                     stack.push_back(fSuccess ? vchTrue : vchFalse);
+		    printf("stack size %d, result: %d, flags %d, FORKID %d, nHashType %d\n",stack.size(),fSuccess,flags, flags & SCRIPT_ENABLE_SIGHASH_FORKID, nHashType);
+		    if (!fSuccess) {
+			    printf("not success");
+		    }
                     if (opcode == OP_CHECKSIGVERIFY)
                     {
                         if (fSuccess)
@@ -984,7 +980,6 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                     for (int k = 0; k < nSigsCount; k++)
                     {
                         valtype& vchSig = stacktop(-isig-k);
-                        CleanupScriptCode(scriptCode, vchSig, flags);
                         if (sigversion == SIGVERSION_BASE) {
                             scriptCode.FindAndDelete(CScript(vchSig));
                         }
@@ -1244,7 +1239,7 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
         // Version
         ss << txTo.nVersion;
         if (postFork && hasForkId) {
-           LogPrintf("Add w salt\n");
+           LogPrintf("Add salt w_v0\n");
            ss << salt;
         }
         // Input prevouts/nSequence (none/all, depending on flags)
@@ -1284,7 +1279,7 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
     CHashWriter ss(SER_GETHASH, 0);
     ss << txTmp << nHashType;
     if (postFork && hasForkId) {
-           LogPrintf("Add salt\n");
+      LogPrintf("Add salt\n");
       ss << salt;
     }
     return ss.GetHash();
@@ -1460,6 +1455,11 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
     bool hadWitness = false;
 
     set_error(serror, SCRIPT_ERR_UNKNOWN_ERROR);
+
+    // If FORKID is enabled, we also ensure strict encoding.
+    if (flags & SCRIPT_ENABLE_SIGHASH_FORKID) {
+        flags |= SCRIPT_VERIFY_STRICTENC;
+    }    
 
     if ((flags & SCRIPT_VERIFY_SIGPUSHONLY) != 0 && !scriptSig.IsPushOnly()) {
         return set_error(serror, SCRIPT_ERR_SIG_PUSHONLY);

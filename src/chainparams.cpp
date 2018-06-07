@@ -205,6 +205,7 @@ public:
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BCCHeight = 518800;
+        consensus.RPHeight = 564160;
         consensus.BCCPremineWindow = 40000;
         consensus.BIP16Height = 514; // 00000000040b4e986385315e14bee30ad876d8b47f748025b26683116d21aa65
         consensus.BIP34Height = 21111;
@@ -255,8 +256,8 @@ public:
         // nodes with support for servicebits filtering should be at the top
         vSeeds.emplace_back("seed.bitcoinclean.org", true);
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,112);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,197);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,196);
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
@@ -295,8 +296,9 @@ public:
         strNetworkID = "regtest";
         consensus.nSubsidyHalvingInterval = 150;
         consensus.BCCHeight = 500;
+        consensus.RPHeight = 600;
         //consensus.BCCHeight = 518800;
-        consensus.BCCPremineWindow = 40000;
+        consensus.BCCPremineWindow = 10;
         consensus.BIP16Height = 0; // always enforce P2SH BIP16 on regtest
         consensus.BIP34Height = 100000000; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests)
         consensus.BIP34Hash = uint256();

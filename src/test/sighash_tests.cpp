@@ -154,7 +154,8 @@ BOOST_AUTO_TEST_CASE(sighash_test)
         }
         std::cout << "\n";
         #endif
-        BOOST_CHECK(sh == sho);
+	if ((nHashType & 0x40) == 0)
+	        BOOST_CHECK(sh == sho);
     }
     #if defined(PRINT_SIGHASH_JSON)
     std::cout << "]\n";
@@ -204,8 +205,10 @@ BOOST_AUTO_TEST_CASE(sighash_from_data)
           continue;
         }
 
-        sh = SignatureHash(scriptCode, *tx, nIn, nHashType, 0, SIGVERSION_BASE);
-        BOOST_CHECK_MESSAGE(sh.GetHex() == sigHashHex, strTest);
+        sh = SignatureHash(scriptCode, *tx, nIn, nHashType & ~0x00000040, 0, SIGVERSION_BASE);
+        if ((nHashType & 0x40) == 0) {
+	  BOOST_CHECK_MESSAGE(sh.GetHex() == sigHashHex, strTest);
+        }
     }
 }
 BOOST_AUTO_TEST_SUITE_END()
