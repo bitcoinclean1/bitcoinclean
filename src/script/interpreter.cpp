@@ -187,11 +187,30 @@ bool static IsLowDERSignature(const valtype &vchSig, ScriptError* serror) {
     return true;
 }
 
+static bool HasForkId(const std::vector<uint8_t> &vchSig) {
+    if (vchSig.size() == 0) {
+        return false;
+    }
+    return ((vchSig[vchSig.size() - 1]) & SIGHASH_FORKID) == SIGHASH_FORKID;
+}
+
+static void CleanupScriptCode(CScript &scriptCode,
+                              const std::vector<uint8_t> &vchSig,
+                              uint32_t flags) {
+    // Drop the signature in scripts when SIGHASH_FORKID is not used.
+    bool hasForkId = HasForkId(vchSig);
+    if (!(flags & SCRIPT_ENABLE_SIGHASH_FORKID) || !hasForkId) {
+        scriptCode.FindAndDelete(CScript(vchSig));
+    }
+}
+
+
 bool static IsDefinedHashtypeSignature(const valtype &vchSig) {
     if (vchSig.size() == 0) {
         return false;
     }
     unsigned char nHashType = vchSig[vchSig.size() - 1] & (~(SIGHASH_ANYONECANPAY));
+    nHashType &= 0x1f;
     if (nHashType < SIGHASH_ALL || nHashType > SIGHASH_SINGLE)
         return false;
 
@@ -209,9 +228,20 @@ bool CheckSignatureEncoding(const std::vector<unsigned char> &vchSig, unsigned i
     } else if ((flags & SCRIPT_VERIFY_LOW_S) != 0 && !IsLowDERSignature(vchSig, serror)) {
         // serror is set
         return false;
-    } else if ((flags & SCRIPT_VERIFY_STRICTENC) != 0 && !IsDefinedHashtypeSignature(vchSig)) {
-        return set_error(serror, SCRIPT_ERR_SIG_HASHTYPE);
-    }
+    } else if ((flags & SCRIPT_VERIFY_STRICTENC) != 0) {
+        if (!IsDefinedHashtypeSignature(vchSig)) {
+            return set_error(serror, SCRIPT_ERR_SIG_HASHTYPE);
+        }
+        bool usesForkId = HasForkId(vchSig);
+        bool forkIdEnabled = (flags & SCRIPT_ENABLE_SIGHASH_FORKID);
+        if (!forkIdEnabled && usesForkId) {
+            return serror?set_error(serror, SCRIPT_ERR_ILLEGAL_FORKID):true;
+        }
+        if (forkIdEnabled && !usesForkId) {
+            return serror?set_error(serror, SCRIPT_ERR_MUST_USE_FORKID):true;
+        }
+
+    } 
     return true;
 }
 
@@ -897,6 +927,7 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                         //serror is set
                         return false;
                     }
+                    CleanupScriptCode(scriptCode, vchSig, flags);
                     bool fSuccess = checker.CheckSig(vchSig, vchPubKey, scriptCode, sigversion, flags);
 
                     if (!fSuccess && (flags & SCRIPT_VERIFY_NULLFAIL) && vchSig.size())
@@ -953,6 +984,7 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                     for (int k = 0; k < nSigsCount; k++)
                     {
                         valtype& vchSig = stacktop(-isig-k);
+                        CleanupScriptCode(scriptCode, vchSig, flags);
                         if (sigversion == SIGVERSION_BASE) {
                             scriptCode.FindAndDelete(CScript(vchSig));
                         }
@@ -1184,7 +1216,7 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
 
     bool postFork = ((flags & SCRIPT_ENABLE_SIGHASH_FORKID) == SCRIPT_ENABLE_SIGHASH_FORKID);
     bool hasForkId = ((nHashType & SIGHASH_FORKID) == SIGHASH_FORKID);
-
+    LogPrintf("SignatureHash: postFork %d, hasForkId %d\n", postFork, hasForkId);
 
     if (sigversion == SIGVERSION_WITNESS_V0) {
         uint256 hashPrevouts;
@@ -1212,6 +1244,7 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
         // Version
         ss << txTo.nVersion;
         if (postFork && hasForkId) {
+           LogPrintf("Add w salt\n");
            ss << salt;
         }
         // Input prevouts/nSequence (none/all, depending on flags)
@@ -1251,6 +1284,7 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
     CHashWriter ss(SER_GETHASH, 0);
     ss << txTmp << nHashType;
     if (postFork && hasForkId) {
+           LogPrintf("Add salt\n");
       ss << salt;
     }
     return ss.GetHash();

@@ -77,6 +77,7 @@ struct Params {
     uint256 nMinimumChainWork;
     uint256 defaultAssumeValid;
     int     BCCHeight;
+    int     RPHeight;
     int     BCCPremineWindow;
 };
 } // namespace Consensus

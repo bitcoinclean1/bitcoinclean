@@ -1761,9 +1761,12 @@ static unsigned int GetBlockScriptFlags(const CBlockIndex* pindex, const Consens
     }
 
     if (pindex->nHeight >= consensusparams.BCCHeight) {
-//        flags |= SCRIPT_VERIFY_STRICTENC;
         flags |= SCRIPT_ENABLE_SIGHASH_FORKID;
     }
+    if (pindex->nHeight >= consensusparams.RPHeight) {
+        flags |= SCRIPT_VERIFY_STRICTENC;
+    }
+   
 
     return flags;
 }

@@ -77,6 +77,7 @@ public:
     CMainParams() {
         strNetworkID = "main";
         consensus.BCCHeight = 518800;
+        consensus.RPHeight = 564160;
         consensus.BCCPremineWindow = 40000;
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP16Height = 173805; // 00000000000000ce80a7e057163a4db1d5ad7b20fb6f598c9597b9665c8fb0d4 - April 1, 2012
@@ -293,7 +294,8 @@ public:
     CRegTestParams() {
         strNetworkID = "regtest";
         consensus.nSubsidyHalvingInterval = 150;
-        consensus.BCCHeight = 518800;
+        consensus.BCCHeight = 500;
+        //consensus.BCCHeight = 518800;
         consensus.BCCPremineWindow = 40000;
         consensus.BIP16Height = 0; // always enforce P2SH BIP16 on regtest
         consensus.BIP34Height = 100000000; // BIP34 has not activated on regtest (far in the future so block v1 are not rejected in tests)
