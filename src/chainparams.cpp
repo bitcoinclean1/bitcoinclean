@@ -295,8 +295,8 @@ public:
     CRegTestParams() {
         strNetworkID = "regtest";
         consensus.nSubsidyHalvingInterval = 150;
-        consensus.BCCHeight = 500;
-        consensus.RPHeight = 600;
+        consensus.BCCHeight = 2020;
+        consensus.RPHeight = 2030;
         //consensus.BCCHeight = 518800;
         consensus.BCCPremineWindow = 10;
         consensus.BIP16Height = 0; // always enforce P2SH BIP16 on regtest

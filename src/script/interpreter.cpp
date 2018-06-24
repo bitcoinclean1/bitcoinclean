@@ -12,6 +12,7 @@
 #include <script/script.h>
 #include <uint256.h>
 #include <util.h>
+#include <chainparams.h>
 
 typedef std::vector<unsigned char> valtype;
 
@@ -194,6 +195,15 @@ static bool HasForkId(const std::vector<uint8_t> &vchSig) {
     return ((vchSig[vchSig.size() - 1]) & SIGHASH_FORKID) == SIGHASH_FORKID;
 }
 
+static void CleanupScriptCode(CScript &scriptCode,
+                              const std::vector<uint8_t> &vchSig,
+                              uint32_t flags) {
+    // Drop the signature in scripts when SIGHASH_FORKID is not used.
+    bool hasForkId = HasForkId(vchSig);
+    if (!(flags & SCRIPT_ENABLE_SIGHASH_FORKID) || !hasForkId) {
+        scriptCode.FindAndDelete(CScript(vchSig));
+    }
+}
 
 bool static IsDefinedHashtypeSignature(const valtype &vchSig) {
     if (vchSig.size() == 0) {
@@ -921,6 +931,7 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                         return false;
                     }
                     bool fSuccess = checker.CheckSig(vchSig, vchPubKey, scriptCode, sigversion, flags);
+//		    printf("OP_CHECKSIG status: stack size %d, result: %d, flags %d, FORKID %d, nHashType %d\n",stack.size(),fSuccess,flags, flags & SCRIPT_ENABLE_SIGHASH_FORKID, nHashType);	
 
                     if (!fSuccess && (flags & SCRIPT_VERIFY_NULLFAIL) && vchSig.size())
                         return set_error(serror, SCRIPT_ERR_SIG_NULLFAIL);
@@ -928,10 +939,6 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                     popstack(stack);
                     popstack(stack);
                     stack.push_back(fSuccess ? vchTrue : vchFalse);
-		    printf("stack size %d, result: %d, flags %d, FORKID %d, nHashType %d\n",stack.size(),fSuccess,flags, flags & SCRIPT_ENABLE_SIGHASH_FORKID, nHashType);
-		    if (!fSuccess) {
-			    printf("not success");
-		    }
                     if (opcode == OP_CHECKSIGVERIFY)
                     {
                         if (fSuccess)
@@ -980,6 +987,8 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                     for (int k = 0; k < nSigsCount; k++)
                     {
                         valtype& vchSig = stacktop(-isig-k);
+                        //CleanupScriptCode(scriptCode, vchSig, flags);
+
                         if (sigversion == SIGVERSION_BASE) {
                             scriptCode.FindAndDelete(CScript(vchSig));
                         }
@@ -1305,8 +1314,9 @@ bool TransactionSignatureChecker::CheckSig(const std::vector<unsigned char>& vch
 
     uint256 sighash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, sigversion, this->txdata, flags);
 
-    if (!VerifySignature(vchSig, pubkey, sighash))
+    if (!VerifySignature(vchSig, pubkey, sighash)) {
         return false;
+    }
 
     return true;
 }
