@@ -404,6 +404,29 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
 /** Context-independent validity checks */
 bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW = true, bool fCheckMerkleRoot = true);
 
+/**
+ * Context dependent validity checks for non coinbase transactions. This
+ * doesn't check the validity of the transaction against the UTXO set, but
+ * simply characteristic that are suceptible to change over time such as feature
+ * activation/deactivation and CLTV.
+ */
+bool ContextualCheckTransaction(const CChainParams& chainParams, const CTransaction &tx,
+                                CValidationState &state, int nHeight,
+                                int64_t nLockTimeCutoff);
+
+
+/**
+ * Computes the contextual
+ * check for a transaction based on the chain tip.
+ *
+ * See consensus/consensus.h for flag definitions.
+ */
+bool ContextualCheckTransactionForCurrentBlock(const CChainParams& chainParams,
+                                               const CTransaction &tx,
+                                               CValidationState &state,
+                                               int flags = -1);
+
+
 /** Check a block is completely valid from start to finish (only works on top of our current best block, with cs_main held) */
 bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams, const CBlock& block, CBlockIndex* pindexPrev, bool fCheckPOW = true, bool fCheckMerkleRoot = true);
 

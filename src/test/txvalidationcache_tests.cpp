@@ -25,16 +25,21 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
 BOOST_AUTO_TEST_SUITE(tx_validationcache_tests)
 
 static bool
-ToMemPool(CMutableTransaction& tx)
+ToMemPool(CMutableTransaction& tx, CValidationState& state)
 {
     LOCK(cs_main);
 
-    CValidationState state;
-
     bool result = AcceptToMemoryPool(mempool, state, MakeTransactionRef(tx), nullptr /* pfMissingInputs */,
                               nullptr /* plTxnReplaced */, true /* bypass_limits */, 0 /* nAbsurdFee */);
-    printf("State: %s",state.GetRejectReason().c_str());
+    printf("State: %s\n",state.GetRejectReason().c_str());
 		    return result;
+}
+
+static bool
+ToMemPool(CMutableTransaction& tx)
+{
+    CValidationState state;
+    return ToMemPool(tx,state);
 }
 
 // Run CheckInputs (using pcoinsTip) on the given transaction, for all script
@@ -313,11 +318,43 @@ BOOST_FIXTURE_TEST_CASE(checkinputs_test, TestChain100Setup)
     }
 }
 
+BOOST_FIXTURE_TEST_CASE(tx_mempool_replay_protection, TestChain100Setup)
+{
+
+    // Make sure skipping validation of transctions that were
+    // validated going into the memory pool does not allow
+    // double-spends in blocks to pass validation when they should not.
+    CScript scriptPubKey = CScript() << ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
+    std::vector<CMutableTransaction> spends;
+    spends.resize(1);
+    for (int i = 0; i < 1; i++)
+    {
+        spends[i].nVersion = 1;
+        spends[i].vin.resize(1);
+        spends[i].vin[0].prevout.hash = coinbaseTxns[0].GetHash();
+        spends[i].vin[0].prevout.n = 0;
+        spends[i].vout.resize(1);
+        spends[i].vout[0].nValue = CENT*0.01;
+        spends[i].vout[0].scriptPubKey = scriptPubKey;
+
+        // Sign:
+        std::vector<unsigned char> vchSig;
+        uint256 hash = SignatureHash(scriptPubKey, spends[i], 0, SIGHASH_ALL, 0, SIGVERSION_BASE);
+        BOOST_CHECK(coinbaseKey.Sign(hash, vchSig));
+        vchSig.push_back((unsigned char)SIGHASH_ALL);
+        spends[i].vin[0].scriptSig << vchSig;
+    }
+    CValidationState state;
+    BOOST_CHECK_EQUAL(ToMemPool(spends[0],state),false);
+    BOOST_CHECK_EQUAL(state.GetRejectReason(),"mandatory-script-verify-flag-failed (Signature must use SIGHASH_FORKID)");
+}
+
 BOOST_FIXTURE_TEST_CASE(tx_mempool_block_doublespend, TestChain100Setup)
 {
     // Make sure skipping validation of transctions that were
     // validated going into the memory pool does not allow
     // double-spends in blocks to pass validation when they should not.
+
     Add2KBlocks();
     CScript scriptPubKey = CScript() <<  ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
 

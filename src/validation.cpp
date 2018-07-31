@@ -578,6 +578,16 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
     if (!CheckFinalTx(tx, STANDARD_LOCKTIME_VERIFY_FLAGS))
         return state.DoS(0, false, REJECT_NONSTANDARD, "non-final");
 
+    CValidationState ctxState;
+    if (!ContextualCheckTransactionForCurrentBlock(
+            chainparams, tx, ctxState, STANDARD_LOCKTIME_VERIFY_FLAGS)) {
+        // We copy the state from a dummy to ensure we don't increase the
+        // ban score of peer for transaction that could be valid in the future.
+        return state.DoS(
+            0, false, REJECT_NONSTANDARD, ctxState.GetRejectReason(),
+            ctxState.CorruptionPossible(), ctxState.GetDebugMessage());
+    }
+
     // is it already in the memory pool?
     if (pool.exists(hash)) {
         return state.Invalid(false, REJECT_DUPLICATE, "txn-already-in-mempool");
@@ -3284,6 +3294,71 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
 
     return true;
 }
+
+bool  ContextualCheckTransaction(const CChainParams& chainParams,
+                                 const CTransaction &tx,
+                                 CValidationState &state, int nHeight,
+                                 int64_t nLockTimeCutoff) {
+    if (!IsFinalTx(tx, nHeight, nLockTimeCutoff)) {
+        // While this is only one transaction, we use txns in the error to
+        // ensure continuity with other clients.
+        return state.DoS(10, false, REJECT_INVALID, "bad-txns-nonfinal", false,
+                         "non-final transaction");
+    }
+
+
+    if (nHeight > chainParams.GetConsensus().RPHeight) {
+        for (const CTxIn &o : tx.vin) {
+            std::vector<std::vector<uint8_t>> stack;
+            // convert the scriptSig into a stack, so we can inspect it
+            if (!EvalScript(stack, o.scriptSig, SCRIPT_VERIFY_STRICTENC,
+                     BaseSignatureChecker(), SIGVERSION_BASE)) {
+ printf("%s: Failed to EvalScript. stack len: %d\n", __func__, stack.size());                
+                
+                return state.DoS(10, false, REJECT_INVALID, "bad-txn-replay",
+                                 false, "non playable transaction");
+            } 
+ printf("%s: Success to EvalScript. stack len: %d\n", __func__, stack.size());                
+        }
+    }
+
+    return true;
+}
+
+bool ContextualCheckTransactionForCurrentBlock(const CChainParams& chainParams,
+                                               const CTransaction &tx,
+                                               CValidationState &state,
+                                               int flags) {
+    AssertLockHeld(cs_main);
+
+    // By convention a negative value for flags indicates that the current
+    // network-enforced consensus rules should be used. In a future soft-fork
+    // scenario that would mean checking which rules would be enforced for the
+    // next block and setting the appropriate flags. At the present time no
+    // soft-forks are scheduled, so no flags are set.
+    flags = std::max(flags, 0);
+
+    // ContextualCheckTransactionForCurrentBlock() uses chainActive.Height()+1
+    // to evaluate nLockTime because when IsFinalTx() is called within
+    // CBlock::AcceptBlock(), the height of the block *being* evaluated is what
+    // is used. Thus if we want to know if a transaction can be part of the
+    // *next* block, we need to call ContextualCheckTransaction() with one more
+    // than chainActive.Height().
+    const int nBlockHeight = chainActive.Height() + 1;
+
+    // BIP113 will require that time-locked transactions have nLockTime set to
+    // less than the median time of the previous block they're contained in.
+    // When the next block is created its previous block will be the current
+    // chain tip, so we use that to calculate the median time passed to
+    // ContextualCheckTransaction() if LOCKTIME_MEDIAN_TIME_PAST is set.
+    const int64_t nLockTimeCutoff = (flags & LOCKTIME_MEDIAN_TIME_PAST)
+                                        ? chainActive.Tip()->GetMedianTimePast()
+                                        : GetAdjustedTime();
+
+    return ContextualCheckTransaction(chainParams, tx, state, nBlockHeight,
+                                      nLockTimeCutoff);
+}
+
 
 bool CChainState::AcceptBlockHeader(const CBlockHeader& block, CValidationState& state, const CChainParams& chainparams, CBlockIndex** ppindex)
 {

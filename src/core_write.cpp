@@ -111,7 +111,14 @@ std::string ScriptToAsmStr(const CScript& script, const bool fAttemptSighashDeco
                     // this won't decode correctly formatted public keys in Pubkey or Multisig scripts due to
                     // the restrictions on the pubkey formats (see IsCompressedOrUncompressedPubKey) being incongruous with the
                     // checks in CheckSignatureEncoding.
-                    if (CheckSignatureEncoding(vch, SCRIPT_VERIFY_STRICTENC, nullptr)) {
+                    uint32_t flags = SCRIPT_VERIFY_STRICTENC;
+                    if (vch.back() & SIGHASH_FORKID) {
+                        // If the transaction is using SIGHASH_FORKID, we need
+                        // to set the apropriate flag.
+                        // TODO: Remove after the Hard Fork.
+                        flags |= SCRIPT_ENABLE_SIGHASH_FORKID;
+                    }
+                    if (CheckSignatureEncoding(vch, flags, nullptr)) {
                         const unsigned char chSigHashType = vch.back();
                         if (mapSigHashTypes.count(chSigHashType)) {
                             strSigHashDecode = "[" + mapSigHashTypes.find(chSigHashType)->second + "]";

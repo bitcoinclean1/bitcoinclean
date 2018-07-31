@@ -77,7 +77,7 @@ public:
     CMainParams() {
         strNetworkID = "main";
         consensus.BCCHeight = 518800;
-        consensus.RPHeight = 564160;
+        consensus.RPHeight = 573400;
         consensus.BCCPremineWindow = 40000;
         consensus.nSubsidyHalvingInterval = 210000;
         consensus.BIP16Height = 173805; // 00000000000000ce80a7e057163a4db1d5ad7b20fb6f598c9597b9665c8fb0d4 - April 1, 2012

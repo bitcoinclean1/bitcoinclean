@@ -1220,7 +1220,7 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
 
     bool postFork = ((flags & SCRIPT_ENABLE_SIGHASH_FORKID) == SCRIPT_ENABLE_SIGHASH_FORKID);
     bool hasForkId = ((nHashType & SIGHASH_FORKID) == SIGHASH_FORKID);
-    LogPrintf("SignatureHash: postFork %d, hasForkId %d\n", postFork, hasForkId);
+//    LogPrintf("SignatureHash: postFork %d, hasForkId %d\n", postFork, hasForkId);
 
     if (sigversion == SIGVERSION_WITNESS_V0) {
         uint256 hashPrevouts;
@@ -1467,10 +1467,11 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
     set_error(serror, SCRIPT_ERR_UNKNOWN_ERROR);
 
     // If FORKID is enabled, we also ensure strict encoding.
+/*
     if (flags & SCRIPT_ENABLE_SIGHASH_FORKID) {
         flags |= SCRIPT_VERIFY_STRICTENC;
     }    
-
+*/
     if ((flags & SCRIPT_VERIFY_SIGPUSHONLY) != 0 && !scriptSig.IsPushOnly()) {
         return set_error(serror, SCRIPT_ERR_SIG_PUSHONLY);
     }
