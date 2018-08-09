@@ -478,7 +478,7 @@ void InitVote()
 
 bool IsVoteActive()
 {
-  keeper.active < VOTE_MIN_ACTIVE;
+  return keeper.active < VOTE_MIN_ACTIVE;
 }
 
 CScoreKeeper GetScoreKeeper(int height)
