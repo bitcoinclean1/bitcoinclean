@@ -180,8 +180,8 @@ UniValue emitvote(const JSONRPCRequest& request)
     EnsureWalletIsUnlocked(pwallet);
     const CKeyStore& keystore = *pwallet;
 
-    int nHashType = SIGHASH_ALL;
-    bool fHashSingle = ((nHashType & ~SIGHASH_ANYONECANPAY) == SIGHASH_SINGLE);
+    int nHashType = SIGHASH_ALL | SIGHASH_FORKID;
+    bool fHashSingle = ((nHashType & ~(SIGHASH_ANYONECANPAY | SIGHASH_FORKID)) == SIGHASH_SINGLE);
 
     // Script verification errors
     UniValue vErrors(UniValue::VARR);
