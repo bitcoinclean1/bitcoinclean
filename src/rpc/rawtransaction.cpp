@@ -890,11 +890,6 @@ UniValue signrawtransaction(const JSONRPCRequest& request)
             nHashType = mapSigHashValues[strHashType];
         else
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid sighash param");
-
-        if ((nHashType & SIGHASH_FORKID) != SIGHASH_FORKID) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER,
-                               "Signature must use SIGHASH_FORKID");
-        }
     }
 
     bool fHashSingle = ((nHashType & ~(SIGHASH_ANYONECANPAY | SIGHASH_FORKID)) == SIGHASH_SINGLE);
