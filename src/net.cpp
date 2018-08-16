@@ -1600,6 +1600,7 @@ void CConnman::ThreadDNSAddressSeed()
     }
 
     const std::vector<std::string> &vSeeds = Params().DNSSeeds();
+    LogPrintf("found  %d seeds\n", vSeeds.size());
     int found = 0;
 
     LogPrintf("Loading addresses from DNS seeds (could take a while)\n");
@@ -1614,15 +1615,19 @@ void CConnman::ThreadDNSAddressSeed()
             std::vector<CNetAddr> vIPs;
             std::vector<CAddress> vAdd;
             ServiceFlags requiredServiceBits = GetDesirableServiceFlags(NODE_NONE);
+            LogPrintf("Checking seed %s\n", seed);
             std::string host = strprintf("x%x.%s", requiredServiceBits, seed);
+            LogPrintf("Resolving %s \n", host);
             CNetAddr resolveSource;
             if (!resolveSource.SetInternal(host)) {
                 continue;
             }
             if (LookupHost(host.c_str(), vIPs, 0, true))
             {
+                LogPrintf("Found  %d ips\n", vIPs.size());
                 for (const CNetAddr& ip : vIPs)
                 {
+                    LogPrintf("Checking ip %s \n", ip.ToStringIP());
                     int nOneDay = 24*3600;
                     CAddress addr = CAddress(CService(ip, Params().GetDefaultPort()), requiredServiceBits);
                     addr.nTime = GetTime() - 3*nOneDay - GetRand(4*nOneDay); // use a random age between 3 and 7 days old
