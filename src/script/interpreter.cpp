@@ -11,7 +11,7 @@
 #include <pubkey.h>
 #include <script/script.h>
 #include <uint256.h>
-#include <util.h>
+//#include <util.h>
 #include <chainparams.h>
 
 typedef std::vector<unsigned char> valtype;
@@ -1248,7 +1248,7 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
         // Version
         ss << txTo.nVersion;
         if (postFork && hasForkId) {
-           LogPrintf("Add salt w_v0\n");
+//LogPrintf("Add salt w_v0\n");
            ss << salt;
         }
         // Input prevouts/nSequence (none/all, depending on flags)
@@ -1288,7 +1288,7 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
     CHashWriter ss(SER_GETHASH, 0);
     ss << txTmp << nHashType;
     if (postFork && hasForkId) {
-      LogPrintf("Add salt\n");
+      //LogPrintf("Add salt\n");
       ss << salt;
     }
     return ss.GetHash();
