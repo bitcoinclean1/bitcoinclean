@@ -42,11 +42,6 @@ bitcoinClean adds the following RPC commands to participate in voting as a miner
 
 Please see the help for these commands for details.
 
-Security
---------
-
-To verify that replay attacks are not feasible with bitcoinClean, please see doc/bitcoinclean-replay.md
-
 License
 --------
 bitcoinClean is released under the terms of the MIT license. See COPYING for more information or see https://opensource.org/licenses/MIT.
