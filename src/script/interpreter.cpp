@@ -209,7 +209,8 @@ bool static IsDefinedHashtypeSignature(const valtype &vchSig) {
     if (vchSig.size() == 0) {
         return false;
     }
-    unsigned char nHashType = vchSig[vchSig.size() - 1] & (~(SIGHASH_ANYONECANPAY));
+    unsigned char nHashType = vchSig[vchSig.size() - 1] & (~(SIGHASH_ANYONECANPAY)) & (~(SIGHASH_FORKID));
+
     nHashType &= 0x1f;
     if (nHashType < SIGHASH_ALL || nHashType > SIGHASH_SINGLE)
         return false;
