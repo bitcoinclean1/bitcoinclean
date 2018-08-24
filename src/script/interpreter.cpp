@@ -932,7 +932,7 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                         return false;
                     }
                     bool fSuccess = checker.CheckSig(vchSig, vchPubKey, scriptCode, sigversion, flags);
-//		    printf("OP_CHECKSIG status: stack size %d, result: %d, flags %d, FORKID %d, nHashType %d\n",stack.size(),fSuccess,flags, flags & SCRIPT_ENABLE_SIGHASH_FORKID, nHashType);	
+		    //LogPrintf("OP_CHECKSIG status: stack size %d, result: %d, flags %d, FORKID %d, nHashType %d\n",stack.size(),fSuccess,flags, flags & SCRIPT_ENABLE_SIGHASH_FORKID, nHashType);	
 
                     if (!fSuccess && (flags & SCRIPT_VERIFY_NULLFAIL) && vchSig.size())
                         return set_error(serror, SCRIPT_ERR_SIG_NULLFAIL);
@@ -1219,9 +1219,15 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
     assert(nIn < txTo.vin.size());
     static const uint256 salt(uint256S("50340A31362031360A07E01D7837FC67BE4E7ECCFF9F6F9FC59FC1C7C1638363822344310C0E7003C0"));
 
+    //LogPrintf("salt: ");
+    //for (auto it = salt.begin(); it != salt.end(); it++) {
+      //LogPrintf("%x ", *it);
+    //}
+    //LogPrintf("\n");
+
     bool postFork = ((flags & SCRIPT_ENABLE_SIGHASH_FORKID) == SCRIPT_ENABLE_SIGHASH_FORKID);
     bool hasForkId = ((nHashType & SIGHASH_FORKID) == SIGHASH_FORKID);
-//    LogPrintf("SignatureHash: postFork %d, hasForkId %d\n", postFork, hasForkId);
+    //LogPrintf("SignatureHash: postFork %d, hasForkId %d\n", postFork, hasForkId);
 
     if (sigversion == SIGVERSION_WITNESS_V0) {
         uint256 hashPrevouts;
@@ -1291,6 +1297,7 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransaction& txTo, unsig
     if (postFork && hasForkId) {
       //LogPrintf("Add salt\n");
       ss << salt;
+      //ss << static_cast<unsigned char>(0xc3);
     }
     return ss.GetHash();
 }
